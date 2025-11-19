@@ -29,7 +29,6 @@ pub fn create_dispute(
         able_to_vote: Vec::new(env),
         voters: Vec::new(env),
         vote_commits: Vec::new(env),
-        revealed: Vec::new(env),
         votes: Vec::new(env),
         dispute_status: DisputeStatus::OPEN,
         initial_timestamp: env.ledger().timestamp(),

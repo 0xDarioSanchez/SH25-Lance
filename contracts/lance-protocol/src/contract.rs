@@ -1,10 +1,10 @@
-use soroban_sdk::{contract, contractimpl, Bytes, BytesN, Env, Address, String};
+use soroban_sdk::{contract, contractimpl, Bytes, Env, Address, String, Vec};
 use crate::storage::{Voter, Dispute, error::Error};
 use crate::methods::{
     initialize::initialize,
     balance::{get_balance, redeem},
     dispute::create_dispute,
-    vote::{register_to_vote, commit_vote, reveal_vote},
+    vote::{register_to_vote, commit_vote, reveal_votes},
 };
 use crate::storage::voter::{get_voter, set_voter};
 
@@ -23,8 +23,7 @@ pub trait ProtocolContractTrait {
         env: &Env,
         creator: Address,
         counterpart: Address,
-        id: u32,
-        reason: String,
+        proof: String,
     ) -> Result<Dispute, Error>;
 
     fn get_balance(env: &Env, employee: Address) -> i128;
@@ -44,15 +43,16 @@ pub trait ProtocolContractTrait {
         env: &Env,
         voter: Address,
         dispute_id: u32,
-        commit_hash: BytesN<32>,
+        vote: bool,
+        secret: Bytes,
     ) -> Result<Dispute, Error>;
 
-    fn reveal_vote(
+    fn reveal_votes(
         env: &Env,
-        voter: Address,
+        creator: Address,
         dispute_id: u32,
-        vote: bool,
-        salt: Bytes,
+        votes: Vec<bool>,
+        secrets: Vec<Bytes>,
     ) -> Result<Dispute, Error>;
 
 }
@@ -89,10 +89,9 @@ impl ProtocolContractTrait for ProtocolContract {
         env: &Env,
         creator: Address,
         counterpart: Address,
-        id: u32,
         proof: String,
     ) -> Result<Dispute, Error> {
-        create_dispute(env, creator, counterpart, id, proof)
+        create_dispute(env, creator, counterpart, proof)
     } 
     
     fn redeem(
@@ -114,18 +113,19 @@ impl ProtocolContractTrait for ProtocolContract {
         env: &Env,
         voter: Address,
         dispute_id: u32,
-        commit_hash: BytesN<32>,
+        vote: bool,
+        secret: Bytes,
     ) -> Result<Dispute, Error> {
-        commit_vote(env, voter, dispute_id, commit_hash)
+        commit_vote(env, voter, dispute_id, vote, secret)
     }
 
-    fn reveal_vote(
+    fn reveal_votes(
         env: &Env,
-        voter: Address,
+        creator: Address,
         dispute_id: u32,
-        vote: bool,
-        salt: Bytes,
+        votes: Vec<bool>,
+        secrets: Vec<Bytes>,
     ) -> Result<Dispute, Error> {
-        reveal_vote(env, voter, dispute_id, vote, salt)
+        reveal_votes(env, creator, dispute_id, votes, secrets)
     }
 }

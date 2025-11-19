@@ -10,7 +10,6 @@ pub struct Dispute {
     pub able_to_vote: Vec<Address>,        // Judges who can vote
     pub voters: Vec<Address>,              // Judges who have committed
     pub vote_commits: Vec<BytesN<32>>,     // Commit hashes
-    pub revealed: Vec<bool>,               // Which votes have been revealed
     pub votes: Vec<Vote>,                  // Revealed votes
     pub dispute_status: DisputeStatus,
     pub initial_timestamp: u64,

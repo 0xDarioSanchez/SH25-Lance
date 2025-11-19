@@ -49,7 +49,8 @@ pub fn commit_vote(
     env: &Env,
     voter: Address,
     dispute_id: u32,
-    commit_hash: BytesN<32>,
+    vote: bool,
+    secret: Bytes,
 ) -> Result<Dispute, Error> {
     voter.require_auth();
 
@@ -84,6 +85,13 @@ pub fn commit_vote(
         }
     }
 
+    // Compute commit hash: SHA256(vote_string || secret)
+    let vote_str = if vote { "true" } else { "false" };
+    let mut data = Bytes::new(env);
+    data.append(&Bytes::from_slice(env, vote_str.as_bytes()));
+    data.append(&secret);
+    let commit_hash: BytesN<32> = env.crypto().sha256(&data).into();
+
     // Store commit
     dispute.voters.push_back(voter);
     dispute.vote_commits.push_back(commit_hash);
@@ -93,113 +101,106 @@ pub fn commit_vote(
     Ok(dispute)
 }
 
-pub fn reveal_vote(
+pub fn reveal_votes(
     env: &Env,
-    voter: Address,
+    creator: Address,
     dispute_id: u32,
-    vote: bool,
-    secret: Bytes,
+    votes: soroban_sdk::Vec<bool>,
+    secrets: soroban_sdk::Vec<Bytes>,
 ) -> Result<Dispute, Error> {
-    voter.require_auth();
+    creator.require_auth();
 
     let mut dispute = get_dispute(env, dispute_id)?;
+
+    // Only dispute creator can reveal votes
+    if creator != dispute.creator {
+        return Err(Error::NotAuthorized);
+    }
 
     // Check if dispute is resolved
     if dispute.dispute_status == DisputeStatus::FINISHED {
         return Err(Error::DisputeAlreadyResolved);
     }
 
-    // Find the judge's commit index
-    let mut judge_index: Option<u32> = None;
+    // Check if dispute is open
+    if dispute.dispute_status != DisputeStatus::OPEN {
+        return Err(Error::DisputeNotOpen);
+    }
+
     let commit_count = dispute.voters.len();
     
-    for i in 0..commit_count {
-        let committed_voter = dispute.voters.get(i).unwrap();
-        if committed_voter == voter {
-            judge_index = Some(i);
-            break;
-        }
-    }
-
-    let idx = match judge_index {
-        Some(i) => i,
-        None => return Err(Error::JudgeNotCommitted),
-    };
-
-    // Check if already revealed
-    if dispute.revealed.get(idx).unwrap_or(false) {
-        return Err(Error::JudgeAlreadyVoted);
-    }
-
-    // Verify the commit hash
-    let stored_commit = dispute.vote_commits.get(idx).unwrap();
-    
-    // Compute hash(vote_string || secret)
-    let vote_str = if vote { "true" } else { "false" };
-    let mut data = Bytes::new(env);
-    data.append(&Bytes::from_slice(env, vote_str.as_bytes()));
-    data.append(&secret);
-    
-    let computed_hash: BytesN<32> = env.crypto().sha256(&data).into();
-
-    // Verify hash matches
-    if stored_commit != computed_hash {
+    // Validate inputs
+    if votes.len() != commit_count || secrets.len() != commit_count {
         return Err(Error::InvalidReveal);
     }
 
-    // Mark as revealed and store the vote
-    dispute.revealed.set(idx, true);
-    dispute.votes.push_back(Vote {
-        account: voter.clone(),
-        vote,
-    });
+    // Verify all commit hashes and collect valid votes
+    for i in 0..commit_count {
+        let vote = votes.get(i).unwrap();
+        let secret = secrets.get(i).unwrap();
+        let stored_commit = dispute.vote_commits.get(i).unwrap();
+        
+        // Compute hash(vote_string || secret)
+        let vote_str = if vote { "true" } else { "false" };
+        let mut data = Bytes::new(env);
+        data.append(&Bytes::from_slice(env, vote_str.as_bytes()));
+        data.append(&secret);
+        
+        let computed_hash: BytesN<32> = env.crypto().sha256(&data).into();
 
-    // Update vote counts
-    if vote {
-        dispute.votes_for += 1;
-    } else {
-        dispute.votes_against += 1;
+        // Verify hash matches
+        if stored_commit != computed_hash {
+            return Err(Error::InvalidReveal);
+        }
+
+        // Store the vote
+        let voter_addr = dispute.voters.get(i).unwrap();
+        dispute.votes.push_back(Vote {
+            account: voter_addr,
+            vote,
+        });
+
+        // Update vote counts
+        if vote {
+            dispute.votes_for += 1;
+        } else {
+            dispute.votes_against += 1;
+        }
     }
 
-    // Check if all votes are revealed
-    let total_reveals = dispute.revealed.iter().filter(|&r| r).count();
-    let required_votes = dispute.able_to_vote.len();
-    
-    if total_reveals == required_votes as usize {
-        // All votes revealed - resolve the dispute
-        dispute.dispute_status = DisputeStatus::FINISHED;
-        dispute.finish_timestamp = Some(env.ledger().timestamp());
+    // All votes revealed - resolve the dispute
+    dispute.dispute_status = DisputeStatus::FINISHED;
+    dispute.finish_timestamp = Some(env.ledger().timestamp());
 
-        // Determine winner
-        if dispute.votes_for > dispute.votes_against {
-            dispute.winner = Some(dispute.creator.clone());
+    // Determine winner
+    if dispute.votes_for > dispute.votes_against {
+        dispute.winner = Some(dispute.creator.clone());
+        
+        // Update balances and reputation for voters
+        for i in 0..dispute.voters.len() {
+            let vote_val = dispute.votes.get(i).unwrap().vote;
+            let voter_addr = dispute.voters.get(i).unwrap();
             
-            // Update balances and reputation for voters
-            for i in 0..dispute.voters.len() {
-                let vote_val = dispute.votes.get(i).unwrap().vote;
-                let voter_addr = dispute.voters.get(i).unwrap();
-                
-                if vote_val {
-                    // Voted for winner
-                    let balance = get_balance(env, &voter_addr);
-                    // Prize distribution logic would go here
-                    set_balance(env, &voter_addr, balance);
-                }
+            if vote_val {
+                // Voted for winner
+                let balance = get_balance(env, &voter_addr);
+                // Prize distribution logic would go here
+                set_balance(env, &voter_addr, balance);
             }
-        } else {
-            dispute.winner = Some(dispute.counterpart.clone());
+        }
+    } else {
+        dispute.winner = Some(dispute.counterpart.clone());
+        
+        // Update balances and reputation for voters
+        for i in 0..dispute.voters.len() {
+            let vote_val = dispute.votes.get(i).unwrap().vote;
+            let voter_addr = dispute.voters.get(i).unwrap();
             
-            // Update balances and reputation for voters
-            for i in 0..dispute.voters.len() {
-                let vote_val = dispute.votes.get(i).unwrap().vote;
-                let voter_addr = dispute.voters.get(i).unwrap();
-                
-                if !vote_val {
-                    // Voted for winner
-                    let balance = get_balance(env, &voter_addr);
-                    // Prize distribution logic would go here
-                    set_balance(env, &voter_addr, balance);
-                }
+            if !vote_val {
+                // Voted for winner
+                let balance = get_balance(env, &voter_addr);
+                // Prize distribution logic would go here
+                set_balance(env, &voter_addr, balance);
             }
         }
     }

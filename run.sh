@@ -88,7 +88,6 @@ stellar contract invoke \
     -- create_dispute \
     --creator lance-admin \
     --counterpart lance-admin \
-    --id 1 \
     --proof "Test dispute for protocol testing"
 
 echo "**********************************************************"
@@ -124,31 +123,63 @@ stellar contract invoke \
     --creator judge-3 \
     --dispute_id 1
 
-# TODO: Add commit_vote and reveal_vote functions when implemented
-# echo "**********************************************************"
-# echo -e "\tJudge 1 committing vote on Dispute 1 ..."
-# echo "**********************************************************"
-# stellar contract invoke \
-#     --id lance-protocol \
-#     --source judge-1 \
-#     --network testnet \
-#     -- commit_vote \
-#     --voter judge-1 \
-#     --dispute_id 1 \
-#     --commit_hash <hash>
+echo "**********************************************************"
+echo -e "\tJudge 1 committing vote on Dispute 1 ..."
+echo "**********************************************************"
+# Judge 1 votes TRUE with secret "secret1" (hex: 73656372657431)
+stellar contract invoke \
+    --id lance-protocol \
+    --source judge-1 \
+    --network testnet \
+    -- commit_vote \
+    --voter judge-1 \
+    --dispute_id 1 \
+    --vote true \
+    --secret '"73656372657431"'
 
-# echo "**********************************************************"
-# echo -e "\tJudge 1 revealing vote on Dispute 1 ..."
-# echo "**********************************************************"
-# stellar contract invoke \
-#     --id lance-protocol \
-#     --source judge-1 \
-#     --network testnet \
-#     -- reveal_vote \
-#     --voter judge-1 \
-#     --dispute_id 1 \
-#     --vote true \
-#     --secret <secret>
+echo "**********************************************************"
+echo -e "\tJudge 2 committing vote on Dispute 1 ..."
+echo "**********************************************************"
+# Judge 2 votes FALSE with secret "secret2" (hex: 73656372657432)
+stellar contract invoke \
+    --id lance-protocol \
+    --source judge-2 \
+    --network testnet \
+    -- commit_vote \
+    --voter judge-2 \
+    --dispute_id 1 \
+    --vote false \
+    --secret '"73656372657432"'
+
+echo "**********************************************************"
+echo -e "\tJudge 3 committing vote on Dispute 1 ..."
+echo "**********************************************************"
+# Judge 3 votes TRUE with secret "secret3" (hex: 73656372657433)
+stellar contract invoke \
+    --id lance-protocol \
+    --source judge-3 \
+    --network testnet \
+    -- commit_vote \
+    --voter judge-3 \
+    --dispute_id 1 \
+    --vote true \
+    --secret '"73656372657433"'
+
+echo "**********************************************************"
+echo -e "\tDispute creator revealing ALL votes at once ..."
+echo "**********************************************************"
+# Creator reveals all votes with their secrets
+# Votes: [true, false, true] for judges 1, 2, 3
+# Secrets: ["secret1", "secret2", "secret3"] in hex format
+stellar contract invoke \
+    --id lance-protocol \
+    --source lance-admin \
+    --network testnet \
+    -- reveal_votes \
+    --creator lance-admin \
+    --dispute_id 1 \
+    --votes '[true, false, true]' \
+    --secrets '["73656372657431", "73656372657432", "73656372657433"]'
 
 echo "**********************************************************"
 echo -e "\tGetting balance for Admin ..."
@@ -160,10 +191,10 @@ stellar contract invoke \
     -- get_balance \
     --employee lance-admin
 
-echo "******************************************************"
-echo -e "\tOpening contract on Stellar Expert explorer"
-echo "******************************************************"
+# echo "******************************************************"
+# echo -e "\tOpening contract on Stellar Expert explorer"
+# echo "******************************************************"
 
-CONTRACT_ID=$(stellar contract alias show lance-protocol)
-EXPLORER_URL="https://stellar.expert/explorer/testnet/contract/$CONTRACT_ID"
-xdg-open "$EXPLORER_URL"
+# CONTRACT_ID=$(stellar contract alias show lance-protocol)
+# EXPLORER_URL="https://stellar.expert/explorer/testnet/contract/$CONTRACT_ID"
+# xdg-open "$EXPLORER_URL"
