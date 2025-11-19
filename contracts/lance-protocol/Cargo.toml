@@ -1,6 +1,6 @@
 [package]
-name = "guess-the-number"
-description = "Admin sets up the pot, anyone can guess to win it"
+name = "lance-protocol"
+description = "Lance Protocol - Decentralized dispute resolution system"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true

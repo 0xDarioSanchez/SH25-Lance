@@ -9,11 +9,9 @@ name = "me" # Required. Keys for this account will be saved to `./.stellar/ident
 default = true # Optional. Whether to use this account as the `--source` for commands that need one.
 
 [development.contracts]
-fungible_allowlist_example = { client = true, constructor_args = "--admin me --manager me --initial_supply 1000000000000000000000000" }
-nft_enumerable_example = { client = true, constructor_args = "--owner me" }
 
 # Rather than in one list, TOML allows specifying contracts in their own "sections"
-[development.contracts.guess_the_number]
+[development.contracts.lance_protocol]
 # Generate a contract client (NPM package) for this contract. This means:
 #   - compile (build) the contract source to Wasm
 #   - deploy the contract to the `network` specified above
@@ -25,7 +23,7 @@ nft_enumerable_example = { client = true, constructor_args = "--owner me" }
 # You can only use `client = true` when:
 #   - the contract source must be part of the local Cargo workspace (in the
 #     PROJECT_ROOT/contracts folder)
-#   - The specified name here ("guess_the_number") must match the
+#   - The specified name here ("lance_protocol") must match the
 #     underscored-version of the `name` in the contract's Cargo.toml.
 #   - The environment is `development` or `testing`
 client = true
@@ -35,7 +33,8 @@ client = true
 # `stellar contract deploy`
 # Only available in `development` and `testing` environments
 constructor_args = """
---admin me
+--admin me \
+--token CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC
 """
 
 # Calls to the contract to make after it's deployed and initialized with
@@ -54,9 +53,8 @@ constructor_args = """
 # `STELLAR_ACCOUNT=other-account`.
 #
 # Only supported in `development` and `testing` environments.
-after_deploy = """
-reset
-"""
+# after_deploy = """
+# """
 
 # Coming Soon: Specify live contracts to bind & import in this project using the given name.
 # During initialization, these contracts will also be "spooned" into the development network,

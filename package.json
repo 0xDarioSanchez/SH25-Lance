@@ -14,7 +14,8 @@
     "prepare": "husky"
   },
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "target/packages/*"
   ],
   "dependencies": {
     "@creit.tech/stellar-wallets-kit": "^1.9.5",

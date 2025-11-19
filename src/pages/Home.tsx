@@ -41,7 +41,7 @@ const Home: React.FC = () => (
         packages like this:
       </Text>
       <pre>
-        <Code size="md">import game from "./contracts/guess_the_number";</Code>
+        <Code size="md">import game from "./contracts/lance_protocol";</Code>
       </pre>
       <Text as="p" size="md">
         If your contract emits events, check out the{" "}

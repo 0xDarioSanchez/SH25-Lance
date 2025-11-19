@@ -10,7 +10,6 @@ pub fn initialize(
     env: &Env,
     admin: Address,
     token: Address,
-    _blend_pool: Address,
 ) -> Result<(), Error> {
     if has_admin(env) {
         return Err(Error::ContractInitialized);

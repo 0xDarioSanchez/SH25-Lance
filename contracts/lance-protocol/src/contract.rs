@@ -9,7 +9,7 @@ use crate::methods::{
 use crate::storage::voter::{get_voter, set_voter};
 
 pub trait ProtocolContractTrait {
-    fn __constructor(env: Env, admin: Address, token: Address, blend_pool: Address) -> Result<(), Error>;
+    fn __constructor(env: Env, admin: Address, token: Address) -> Result<(), Error>;
 
     fn new_voter(
         env: Env,
@@ -49,8 +49,8 @@ pub struct ProtocolContract;
 
 #[contractimpl]
 impl ProtocolContractTrait for ProtocolContract {
-    fn __constructor(env: Env, admin: Address, token: Address, blend_pool: Address) -> Result<(), Error> {
-        initialize(&env, admin, token, blend_pool)
+    fn __constructor(env: Env, admin: Address, token: Address) -> Result<(), Error> {
+        initialize(&env, admin, token)
     }
 
     fn new_voter(
