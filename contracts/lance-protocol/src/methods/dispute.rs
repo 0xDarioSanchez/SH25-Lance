@@ -4,14 +4,12 @@ use crate::{ storage::{
     error::Error,
     storage::DataKey,
 }};
-// use crate::events::event::created_dispute;
 use soroban_sdk::{Address, Env, String, Vec};
 
 pub fn create_dispute(
     env: &Env,
     creator: Address,
     counterpart: Address,
-    dispute_id: u32,
     proof: String,
 ) -> Result<Dispute, Error> {
     creator.require_auth();

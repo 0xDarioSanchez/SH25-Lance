@@ -4,7 +4,7 @@ use crate::methods::{
     initialize::initialize,
     balance::{get_balance, redeem},
     dispute::create_dispute,
-    vote::register_to_vote,
+    vote::{register_to_vote, commit_vote, reveal_vote},
 };
 use crate::storage::voter::{get_voter, set_voter};
 
@@ -38,6 +38,21 @@ pub trait ProtocolContractTrait {
         env: &Env, 
         creator: Address, 
         dispute_id: u32
+    ) -> Result<Dispute, Error>;
+
+    fn commit_vote(
+        env: &Env,
+        voter: Address,
+        dispute_id: u32,
+        commit_hash: BytesN<32>,
+    ) -> Result<Dispute, Error>;
+
+    fn reveal_vote(
+        env: &Env,
+        voter: Address,
+        dispute_id: u32,
+        vote: bool,
+        salt: Bytes,
     ) -> Result<Dispute, Error>;
 
 }
@@ -93,5 +108,24 @@ impl ProtocolContractTrait for ProtocolContract {
         dispute_id: u32
     ) -> Result<Dispute, Error> {
         register_to_vote(env, creator, dispute_id)
+    }
+
+    fn commit_vote(
+        env: &Env,
+        voter: Address,
+        dispute_id: u32,
+        commit_hash: BytesN<32>,
+    ) -> Result<Dispute, Error> {
+        commit_vote(env, voter, dispute_id, commit_hash)
+    }
+
+    fn reveal_vote(
+        env: &Env,
+        voter: Address,
+        dispute_id: u32,
+        vote: bool,
+        salt: Bytes,
+    ) -> Result<Dispute, Error> {
+        reveal_vote(env, voter, dispute_id, vote, salt)
     }
 }
