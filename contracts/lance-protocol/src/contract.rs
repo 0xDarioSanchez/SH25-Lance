@@ -1,5 +1,13 @@
-use soroban_sdk::{contractimpl, Bytes, BytesN, Env, Address, Error, String};
-use crate::storage::{Voter, Dispute};
+use soroban_sdk::{contract, contractimpl, Bytes, BytesN, Env, Address, String};
+use crate::storage::{Voter, Dispute, error::Error};
+use crate::methods::{
+    initialize::initialize,
+    balance::{get_balance, redeem},
+    dispute::create_dispute,
+    vote::register_to_vote,
+};
+use crate::storage::voter::{get_voter, set_voter};
+
 pub trait ProtocolContractTrait {
     fn __constructor(env: Env, admin: Address, token: Address, blend_pool: Address) -> Result<(), Error>;
 
@@ -32,27 +40,6 @@ pub trait ProtocolContractTrait {
         dispute_id: u32
     ) -> Result<Dispute, Error>;
 
-    fn commit_vote(
-        env: &Env,
-        voter: Address,
-        dispute_id: u32,
-        commit_hash: BytesN<32>,
-    ) -> Result<Dispute, Error>;
-
-    fn reveal_vote(
-        env: &Env,
-        voter: Address,
-        dispute_id: u32,
-        vote: bool,
-        secret: Bytes,
-    ) -> Result<Dispute, Error>;
-
-    // fn vote(
-    //     env: &Env, 
-    //     creator: Address, 
-    //     dispute_id: u32, 
-    //     vote: Vote
-    // ) -> Result<Dispute, Error>;
 }
 
 
@@ -107,32 +94,4 @@ impl ProtocolContractTrait for ProtocolContract {
     ) -> Result<Dispute, Error> {
         register_to_vote(env, creator, dispute_id)
     }
-
-    fn commit_vote(
-        env: &Env,
-        voter: Address,
-        dispute_id: u32,
-        commit_hash: BytesN<32>,
-    ) -> Result<Dispute, Error> {
-        commit_vote(env, voter, dispute_id, commit_hash)
-    }
-
-    fn reveal_vote(
-        env: &Env,
-        voter: Address,
-        dispute_id: u32,
-        vote: bool,
-        secret: Bytes,
-    ) -> Result<Dispute, Error> {
-        reveal_vote(env, voter, dispute_id, vote, secret)
-    }
-
-    // fn vote(
-    //     env: &Env, 
-    //     creator: Address, 
-    //     dispute_id: u32, 
-    //     user_vote: Vote
-    // ) -> Result<Dispute, Error> {
-    //     vote(env, creator, dispute_id, user_vote)
-    // } 
 }
