@@ -1,19 +1,18 @@
 use crate::{
     methods::balance::{get_balance, set_balance},
     storage::{
-        dispute::{get_dispute, set_dispute, Dispute},
+        dispute::{Dispute, get_dispute, set_dispute},
         dispute_status::DisputeStatus,
         error::Error,
-        voter::get_voter,
         vote::Vote,
+        voter::get_voter,
     },
 };
-use soroban_sdk::{Address, Env, BytesN, Bytes};
+use soroban_sdk::{Address, Bytes, BytesN, Env};
 
 //TODO add
 // const VOTE_BASE_POWER: u32 = 1;
 // const MIN_VOTES_TO_FINISH_DISPUTE: u32 = 5;
-
 
 pub fn register_to_vote(env: &Env, voter: Address, dispute_id: u32) -> Result<Dispute, Error> {
     voter.require_auth();
@@ -42,8 +41,6 @@ pub fn register_to_vote(env: &Env, voter: Address, dispute_id: u32) -> Result<Di
 
     Ok(dispute)
 }
-
-
 
 pub fn commit_vote(
     env: &Env,
@@ -95,7 +92,7 @@ pub fn commit_vote(
     // Store commit
     dispute.voters.push_back(voter);
     dispute.vote_commits.push_back(commit_hash);
-    
+
     set_dispute(env, dispute_id, dispute.clone());
 
     Ok(dispute)
@@ -105,8 +102,8 @@ pub fn reveal_votes(
     env: &Env,
     creator: Address,
     dispute_id: u32,
-    // votes: soroban_sdk::Vec<bool>,
-    // secrets: soroban_sdk::Vec<Bytes>,
+    votes: soroban_sdk::Vec<bool>,
+    secrets: soroban_sdk::Vec<Bytes>,
 ) -> Result<Dispute, Error> {
     creator.require_auth();
 
@@ -128,7 +125,7 @@ pub fn reveal_votes(
     }
 
     let commit_count = dispute.voters.len();
-    
+
     // Validate inputs
     if votes.len() != commit_count || secrets.len() != commit_count {
         return Err(Error::InvalidReveal);
@@ -139,13 +136,13 @@ pub fn reveal_votes(
         let vote = votes.get(i).unwrap();
         let secret = secrets.get(i).unwrap();
         let stored_commit = dispute.vote_commits.get(i).unwrap();
-        
+
         // Compute hash(vote_string || secret)
         let vote_str = if vote { "true" } else { "false" };
         let mut data = Bytes::new(env);
         data.append(&Bytes::from_slice(env, vote_str.as_bytes()));
         data.append(&secret);
-        
+
         let computed_hash: BytesN<32> = env.crypto().sha256(&data).into();
 
         // Verify hash matches
@@ -175,12 +172,12 @@ pub fn reveal_votes(
     // Determine winner
     if dispute.votes_for > dispute.votes_against {
         dispute.winner = Some(dispute.creator.clone());
-        
+
         // Update balances and reputation for voters
         for i in 0..dispute.voters.len() {
             let vote_val = dispute.votes.get(i).unwrap().vote;
             let voter_addr = dispute.voters.get(i).unwrap();
-            
+
             if vote_val {
                 // Voted for winner
                 let balance = get_balance(env, &voter_addr);
@@ -190,12 +187,12 @@ pub fn reveal_votes(
         }
     } else {
         dispute.winner = Some(dispute.counterpart.clone());
-        
+
         // Update balances and reputation for voters
         for i in 0..dispute.voters.len() {
             let vote_val = dispute.votes.get(i).unwrap().vote;
             let voter_addr = dispute.voters.get(i).unwrap();
-            
+
             if !vote_val {
                 // Voted for winner
                 let balance = get_balance(env, &voter_addr);
