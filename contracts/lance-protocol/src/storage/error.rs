@@ -29,5 +29,6 @@ pub enum Error {
     JudgeAlreadyVoted = 22,
     InvalidReveal = 23,
     JudgeNotCommitted = 24,
+    UnauthorizedSigner = 25,
+    InvalidKey = 26,
 }
-
