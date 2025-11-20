@@ -7,20 +7,22 @@ use crate::storage::{error::Error, storage::DataKey};
 #[contracttype]
 pub struct Dispute {
     pub dispute_id: u32,
-    pub contract_address: Address,
-    pub requester: Address,
-    pub beneficiary: Address,
-    pub voters: Vec<Address>,        // ordered list of judges for this dispute
-    pub commits: Vec<BytesN<32>>,    // commits per voter index
-    pub revealed: Vec<bool>,         // whether each vote is revealed
-    pub vote_plain: Vec<bool>,       // revealed vote booleans
-    pub commits_count: u32,
-    pub reveals_count: u32,
+    pub able_to_vote: Vec<Address>,        // Judges who can vote
+    pub voters: Vec<Address>,              // Judges who have committed
+    pub vote_commits: Vec<BytesN<32>>,   // Commit hashes
+    pub votes: Vec<Vote>,                  // Revealed votes
+    pub dispute_status: DisputeStatus,
+    pub initial_timestamp: u64,
+    pub finish_timestamp: Option<u64>,
+    pub creator: Address,
+    pub counterpart: Address,  
+    pub winner: Option<Address>,
+    pub creator_proves: String,      
+    pub counterpart_proves: Option<String>,
+    pub waiting_for_judges: bool,
     pub votes_for: u32,
     pub votes_against: u32,
-    pub waiting_for_judges: bool,
-    pub is_open: bool,
-    pub resolved: bool,
+    //TODO add payment: i128, ???
 }
 
 pub(crate) fn get_dispute(env: &Env, dispute_id: u32) -> Result<Dispute, Error> {
