@@ -51,8 +51,8 @@ pub trait ProtocolContractTrait {
         env: &Env,
         creator: Address,
         dispute_id: u32,
-        votes: Vec<bool>,
-        secrets: Vec<Bytes>,
+        // votes: Vec<bool>,
+        // secrets: Vec<Bytes>,
     ) -> Result<Dispute, Error>;
 
 }
@@ -123,9 +123,9 @@ impl ProtocolContractTrait for ProtocolContract {
         env: &Env,
         creator: Address,
         dispute_id: u32,
-        votes: Vec<bool>,
-        secrets: Vec<Bytes>,
+        // votes: Vec<bool>,
+        // secrets: Vec<Bytes>,
     ) -> Result<Dispute, Error> {
-        reveal_votes(env, creator, dispute_id, votes, secrets)
+        reveal_votes(env, creator, dispute_id)
     }
 }

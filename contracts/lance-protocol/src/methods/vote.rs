@@ -105,8 +105,8 @@ pub fn reveal_votes(
     env: &Env,
     creator: Address,
     dispute_id: u32,
-    votes: soroban_sdk::Vec<bool>,
-    secrets: soroban_sdk::Vec<Bytes>,
+    // votes: soroban_sdk::Vec<bool>,
+    // secrets: soroban_sdk::Vec<Bytes>,
 ) -> Result<Dispute, Error> {
     creator.require_auth();
 
