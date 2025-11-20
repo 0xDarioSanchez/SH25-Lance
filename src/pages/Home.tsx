@@ -1,86 +1,42 @@
 import React from "react";
 import { Code, Layout, Text } from "@stellar/design-system";
-import { GuessTheNumber } from "../components/GuessTheNumber";
+// import { GuessTheNumber } from "../components/GuessTheNumber";
 
 const Home: React.FC = () => (
   <Layout.Content>
     <Layout.Inset>
       <Text as="h1" size="xl">
-        Welcome to your app!
-      </Text>
-      <Text as="p" size="md">
-        This is a basic template to get your dapp started with the Stellar
-        Design System and Stellar contracts. You can customize it further by
-        adding your own contracts, components, and styles.
+        Lance Protocol – ZK Voting Integration
       </Text>
 
-      <Text as="h2" size="lg">
-        Develop your contracts
-      </Text>
       <Text as="p" size="md">
-        Take a look in the <Code size="md">contracts/</Code> directory. Compare
-        that to what you see in the <Code size="md">npm run dev</Code> output
-        (which itself is running <Code size="md">stellar scaffold watch</Code>).
-        Also compare it to what you see when you click{" "}
-        <Code size="md">&lt;/&gt; Debugger</Code> up in the top right. See?
-      </Text>
-      <Text as="p" size="md">
-        As you update your contracts,{" "}
-        <Code size="md">stellar scaffold watch</Code> command will automatically
-        recompile them and update the dapp with the latest changes.
+        In this hackathon, we’re focusing entirely on the core smart contract behind 
+        <Code size="md">Lance Protocol</Code>. You can explore the current implementation 
+        inside the <Code size="md">contracts/</Code> directory — this is where the 
+        dispute resolution flow lives in its initial Proof of Concept form.
       </Text>
 
-      <Text as="h2" size="lg">
-        Interact with contracts from the frontend
-      </Text>
       <Text as="p" size="md">
-        Scaffold stellar automatically builds, deploys, and generates frontend
-        packages (sometimes called "TypeScript bindings") for each of your
-        contracts. You can adjust how it does this in the{" "}
-        <Code size="md">environments.toml</Code> file. Import these frontend
-        packages like this:
+        The goal is to refactor this contract to give it a clean and modular structure, 
+        preparing the base layer for features like private judge voting. Running 
+        <Code size="md">npm run dev</Code> (powered by <Code size="md">stellar scaffold watch</Code>) 
+        allows you to see how the contract compiles and how the updated functions are 
+        generated as we iterate.
       </Text>
-      <pre>
-        <Code size="md">import game from "./contracts/lance_protocol";</Code>
-      </pre>
+
       <Text as="p" size="md">
-        If your contract emits events, check out the{" "}
-        <Code size="md">useSubscription</Code> hook in the{" "}
-        <Code size="md">hooks/</Code> folder to listen to them.
+        We’re also introducing the foundation for a Zero-Knowledge (ZK)–based voting 
+        mechanism. All updates and iterations will be pushed to 
+        {" "}
+        <a href="https://github.com/0xDarioSanchez/SH25-Lance" 
+          target="_blank" 
+          style={{ textDecoration: "none" }}>
+          <Code size="md">github.com/0xDarioSanchez/SH25-Lance</Code>
+        </a>, 
+        so you can follow the evolution of the contract and the development of the 
+        voting model in real time.
       </Text>
-      <Text as="p" size="md">
-        As an example, here's the <Code size="md">GuessTheNumber</Code>{" "}
-        component. Make changes to the contract and the component and see how
-        things change!
-      </Text>
-      <Text as="h2" size="lg">
-        &lt;GuessTheNumber /&gt;
-      </Text>
-      <GuessTheNumber />
-      <Text as="h2" size="lg">
-        Interact with wallets
-      </Text>
-      <Text as="p" size="md">
-        This project is already integrated with Stellar Wallet Kit, and the{" "}
-        <Code size="md">useWallet</Code> hook is available for you to use in
-        your components. You can use it to connect to get connected account
-        information.
-      </Text>
-      <Text as="h2" size="lg">
-        Deploy your app
-      </Text>
-      <Text as="p" size="md">
-        To deploy your contracts, use the{" "}
-        <Code size="md">stellar registry publish</Code> and
-        <Code size="md">stellar registry deploy</Code> commands ( use{" "}
-        <Code size="md">stellar registry --help</Code> for more info ) to deploy
-        to the appropriate Stellar network.
-      </Text>
-      <Text as="p" size="md">
-        Build your frontend application code with{" "}
-        <Code size="md">npm run build</Code> and deploy the output in the
-        <Code size="md">dist/</Code> directory.
-      </Text>
+
     </Layout.Inset>
   </Layout.Content>
 );
