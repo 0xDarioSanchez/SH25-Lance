@@ -224,7 +224,24 @@ pub fn execute(
     ) {
         panic_with_error!(&env, &Error::InvalidProof)
     }
+    
+    // Set the dispute status based on tallies
     dispute.dispute_status = anonymous_execute(&tallies_);
+    
+    // Extract vote counts from tallies
+    let voted_approve = tallies_.get(0).unwrap();
+    let voted_reject = tallies_.get(1).unwrap();
+    
+    // Set votes_for and votes_against
+    dispute.votes_for = voted_approve as u32;
+    dispute.votes_against = voted_reject as u32;
+    
+    // Set the winner based on the dispute status
+    dispute.winner = match dispute.dispute_status {
+        DisputeStatus::CREATOR => Some(dispute.creator.clone()),
+        DisputeStatus::COUNTERPART => Some(dispute.counterpart.clone()),
+        _ => None,
+    };
 
     set_dispute(&env, dispute_id, dispute.clone());
 
