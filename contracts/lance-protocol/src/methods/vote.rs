@@ -375,12 +375,7 @@ pub fn vote(
     // Record the vote
     dispute.vote_data.votes.push_back(vote.clone());
 
-    // dao_page.proposals.set(sub_id, proposal);
-
-    // env.storage().persistent().set(
-    //     &types::ProjectKey::Dao(project_key.clone(), page),
-    //     &dao_page,
-    // );
+    set_dispute(&env, dispute_id, dispute.clone());
 
     events::VoteCast {
         //project_key,

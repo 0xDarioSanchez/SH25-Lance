@@ -68,7 +68,7 @@ fn test_vote_maths() {
         &setup.creator,
         &setup.project_id,
         &dispute.dispute_id,
-        &Some(vec![&setup.env, 9u128, 3u128, 500003u128]),
+        &Some(vec![&setup.env, 9u128, 3u128, 3u128]),
         &Some(vec![&setup.env, 15u128, 12u128, 18u128]),
     );
 
