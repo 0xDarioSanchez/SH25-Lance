@@ -2,11 +2,17 @@ import { useState } from "react";
 import { Button, Input, Modal, Text, Textarea } from "@stellar/design-system";
 import { useWallet } from "../hooks/useWallet";
 import { StrKey } from "@stellar/stellar-sdk";
+import { createDispute } from "../api/disputes";
 
-export const CreateDisputeButton = () => {
+interface Props {
+  onCreated?: () => void;
+}
+
+export const CreateDisputeButton = ({ onCreated }: Props) => {
   const [showModal, setShowModal] = useState(false);
   const [counterpart, setCounterpart] = useState("");
   const [proof, setProof] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const { address, isPending } = useWallet();
   const isConnected = !!address;
@@ -17,28 +23,36 @@ export const CreateDisputeButton = () => {
 
   const counterpartIsValid = isValidStellarAddress(counterpart);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!address || !counterpartIsValid) return;
 
+    setSubmitting(true);
+
     const payload = {
-      creator: address, // wallet actual
+      creator: address,
       counterpart: counterpart.trim(),
       proof: proof.trim(),
+      state: "pending",
+      createdAt: new Date().toISOString(),
     };
 
-    console.log("Dispute payload:", payload);
+    try {
+      await createDispute(payload);
 
-    // Aquí después hacemos la llamada al contrato Soroban
-    // createDispute(payload);
+      if (onCreated) onCreated();
 
-    setShowModal(false);
-    setCounterpart("");
-    setProof("");
+      setShowModal(false);
+      setCounterpart("");
+      setProof("");
+    } catch (error) {
+      console.error("Error creating dispute:", error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <div id="createDisputeContainer">
-      {/* Modal */}
       <Modal
         visible={showModal}
         onClose={() => setShowModal(false)}
@@ -50,7 +64,6 @@ export const CreateDisputeButton = () => {
           Fill the parameters required by the smart contract to open a dispute.
         </Text>
 
-        {/* CREATOR */}
         <Text as="span" size="sm" style={{ fontWeight: 600 }}>
           Creator (your wallet)
         </Text>
@@ -62,7 +75,6 @@ export const CreateDisputeButton = () => {
           fieldSize="md"
         />
 
-        {/* COUNTERPART */}
         <Text as="span" size="sm" style={{ fontWeight: 600 }}>
           Counterpart Address
         </Text>
@@ -76,14 +88,12 @@ export const CreateDisputeButton = () => {
           fieldSize="md"
         />
 
-        {/* Error message */}
         {!counterpartIsValid && counterpart.trim() !== "" && (
           <Text as="div" size="sm" style={{ color: "#d9534f", marginBottom: "14px" }}>
             Invalid Stellar address
           </Text>
         )}
 
-        {/* PROOF */}
         <Text as="span" size="sm" style={{ fontWeight: 600 }}>
           Proof / Reason for Dispute
         </Text>
@@ -102,12 +112,13 @@ export const CreateDisputeButton = () => {
             variant="primary"
             onClick={handleSubmit}
             disabled={
+              submitting ||
               !counterpart.trim() ||
               !proof.trim() ||
               !counterpartIsValid
             }
           >
-            Submit Dispute
+            {submitting ? "Submitting..." : "Submit Dispute"}
           </Button>
 
           <Button
@@ -120,7 +131,6 @@ export const CreateDisputeButton = () => {
         </Modal.Footer>
       </Modal>
 
-      {/* Trigger button */}
       <Button
         size="md"
         variant={isConnected ? "primary" : "secondary"}
