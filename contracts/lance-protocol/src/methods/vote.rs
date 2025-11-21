@@ -5,10 +5,13 @@ use crate::{
         dispute_status::DisputeStatus,
         error::Error,
         vote::Vote,
+        vote::get_anonymous_voting_config,
         voter::get_voter,
     },
 };
-use soroban_sdk::{Address, Bytes, BytesN, Env};
+use soroban_sdk::{
+    Address, Bytes, BytesN, Env, U256, Vec, crypto::bls12_381::G1Affine, panic_with_error,
+};
 
 //TODO add
 // const VOTE_BASE_POWER: u32 = 1;
@@ -171,7 +174,7 @@ pub fn reveal_votes(
 
     // Determine winner and distribute rewards
     const REWARD_PER_CORRECT_VOTE: i128 = 1_000_000; // 0.1 tokens (7 decimals)
-    
+
     if dispute.votes_for > dispute.votes_against {
         dispute.winner = Some(dispute.creator.clone());
 
@@ -205,4 +208,53 @@ pub fn reveal_votes(
     set_dispute(env, dispute_id, dispute.clone());
 
     Ok(dispute)
+}
+
+/// Build vote commitments from votes and seeds for anonymous voting.
+///
+/// Creates BLS12-381 commitments for each vote using the formula:
+/// C = g·vote + h·seed where g and h are generator points on BLS12-381.
+///
+/// Note: This function does not consider voting weights, which are applied
+/// during the tallying phase. Calling this on the smart contract would reveal
+/// the votes and seeds, so it must be run either in simulation or client-side.
+///
+/// # Arguments
+/// * `env` - The environment object
+/// * `project_key` - Unique identifier for the project
+/// * `votes` - Vector of vote choices (0=approve, 1=reject, 2=abstain)
+/// * `seeds` - Vector of random seeds for each vote
+///
+/// # Returns
+/// * `Vec<BytesN<96>>` - Vector of vote commitments (one per vote)
+///
+/// # Panics
+/// * If no anonymous voting configuration exists for the project
+pub fn build_commitments_from_votes(
+    env: Env,
+    project_id: u32,
+    votes: Vec<u128>,
+    seeds: Vec<u128>,
+) -> Vec<BytesN<96>> {
+    // Validate that votes and seeds have the same length
+    if votes.len() != seeds.len() {
+        panic_with_error!(&env, &Error::TallySeedError);
+    }
+
+    let vote_config = get_anonymous_voting_config(env.clone(), project_id);
+
+    let bls12_381 = env.crypto().bls12_381();
+    let seed_generator_point = G1Affine::from_bytes(vote_config.seed_generator_point);
+    let vote_generator_point = G1Affine::from_bytes(vote_config.vote_generator_point);
+
+    let mut commitments = Vec::new(&env);
+    for (vote_, seed_) in votes.iter().zip(seeds.iter()) {
+        let vote_: U256 = U256::from_u128(&env, vote_);
+        let seed_: U256 = U256::from_u128(&env, seed_);
+        let seed_point_ = bls12_381.g1_mul(&seed_generator_point, &seed_.into());
+        let vote_point_ = bls12_381.g1_mul(&vote_generator_point, &vote_.into());
+
+        commitments.push_back(bls12_381.g1_add(&vote_point_, &seed_point_).to_bytes());
+    }
+    commitments
 }

@@ -1,4 +1,4 @@
-use soroban_sdk::{contracttype, Address};
+use soroban_sdk::{Address, contracttype};
 
 #[derive(Clone)]
 #[contracttype]
@@ -9,4 +9,5 @@ pub enum DataKey {
     Disputes(u32),
     DisputeId,
     Balances(Address),
+    AnonymousVoteConfig(u32),
 }

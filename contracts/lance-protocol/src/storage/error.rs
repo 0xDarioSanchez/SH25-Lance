@@ -31,4 +31,7 @@ pub enum Error {
     JudgeNotCommitted = 24,
     UnauthorizedSigner = 25,
     InvalidKey = 26,
+    TallySeedError = 27,
+    NoAnonymousVotingConfig = 28,
+    AdminNotFound = 29,
 }

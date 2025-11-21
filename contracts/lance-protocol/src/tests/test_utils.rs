@@ -1,6 +1,8 @@
 //use crate::{Tansu, TansuClient, domain_contract, outcomes_contract, types};
-use soroban_sdk::testutils::Address as _;
-use soroban_sdk::{Address, Env, String, token};
+use soroban_sdk::testutils::{Address as _, Events};
+use soroban_sdk::{
+    Address, Bytes, Env, Executable, IntoVal, Map, String, Symbol, Val, Vec, token, vec,
+};
 
 use crate::ProtocolContract;
 use crate::contract::ProtocolContractClient;
@@ -22,6 +24,9 @@ pub struct TestSetup {
     pub judge1: Address,
     pub judge2: Address,
     pub judge3: Address,
+    pub project_id: u32,
+    pub public_key: String,
+    pub voting_ends_at: u64,
 }
 
 pub fn create_env() -> Env {
@@ -95,6 +100,9 @@ pub fn create_test_data() -> TestSetup {
     let judge2 = Address::generate(&env);
     let judge3 = Address::generate(&env);
     let proof = String::from_str(&env, "test proof 1");
+    let project_id = 1;
+    let public_key = String::from_str(&env, "test public key 1");
+    let voting_ends_at = env.ledger().timestamp() + 3600 * 24 * 2;
 
     TestSetup {
         env,
@@ -112,6 +120,9 @@ pub fn create_test_data() -> TestSetup {
         judge1,
         judge2,
         judge3,
+        project_id,
+        public_key,
+        voting_ends_at,
     }
 }
 
@@ -121,13 +132,50 @@ pub fn init_contract(setup: &TestSetup) -> Dispute {
     let _ipfs = String::from_str(&setup.env, "2ef4f49fdd8fa9dc463f1f06a094c26b88710990");
     //let maintainers = vec![&setup.env, setup.grogu.clone(), setup.mando.clone()];
 
-    let _genesis_amount: i128 = 1_000_000_000 * 10_000_000;
+    let genesis_amount: i128 = 1_000_000_000 * 10_000_000;
     //setup.token_stellar.mint(&setup.grogu, &genesis_amount);
     //setup.token_stellar.mint(&setup.mando, &genesis_amount);
 
-    let dispute = setup
-        .contract
-        .create_dispute(&setup.creator, &setup.counterpart, &setup.proof);
+    let dispute = setup.contract.create_dispute(
+        &setup.project_id,
+        &setup.public_key,
+        &setup.creator,
+        &setup.counterpart,
+        &setup.proof,
+        &setup.voting_ends_at,
+    );
+
+    let all_events = setup.env.events().all();
+    assert_eq!(
+        all_events,
+        vec![
+            &setup.env,
+            (
+                setup.contract_id.clone(),
+                (
+                    Symbol::new(&setup.env, "anonymous_dispute_setup"),
+                    setup.project_id.clone()
+                )
+                    .into_val(&setup.env),
+                Map::<Symbol, Val>::from_array(
+                    &setup.env,
+                    [
+                        (
+                            Symbol::new(&setup.env, "creator"),
+                            setup.creator.clone().into_val(&setup.env)
+                        ),
+                        (
+                            Symbol::new(&setup.env, "public_key"),
+                            setup.public_key.into_val(&setup.env)
+                        ),
+                    ],
+                )
+                .into_val(&setup.env),
+            ),
+        ]
+    );
+
+    assert_eq!(dispute.vote_data.votes, vec![&setup.env]);
 
     setup.contract.new_voter(&setup.judge1);
     setup

@@ -1,18 +1,23 @@
 use soroban_sdk::{String, testutils::Address as _};
 
-use crate::tests::test_utils::{create_test_data, init_contract};
 use crate::storage::dispute_status::DisputeStatus;
+use crate::tests::test_utils::{create_test_data, init_contract};
 
 #[test]
 fn test_create_dispute_success() {
     let setup = create_test_data();
-    
+
     let proof = String::from_str(&setup.env, "IPFS_HASH_PROOF_1");
-    
-    let dispute = setup
-        .contract
-        .create_dispute(&setup.creator, &setup.counterpart, &proof);
-    
+
+    let dispute = setup.contract.create_dispute(
+        &setup.project_id,
+        &setup.public_key,
+        &setup.creator,
+        &setup.counterpart,
+        &proof,
+        &setup.voting_ends_at,
+    );
+
     assert_eq!(dispute.dispute_id, 1);
     assert_eq!(dispute.creator, setup.creator);
     assert_eq!(dispute.counterpart, setup.counterpart);
@@ -27,21 +32,31 @@ fn test_create_dispute_success() {
 #[test]
 fn test_create_multiple_disputes() {
     let setup = create_test_data();
-    
+
     let proof1 = String::from_str(&setup.env, "PROOF_1");
     let proof2 = String::from_str(&setup.env, "PROOF_2");
-    
-    let dispute1 = setup
-        .contract
-        .create_dispute(&setup.creator, &setup.counterpart, &proof1);
-    
+
+    let dispute1 = setup.contract.create_dispute(
+        &setup.project_id,
+        &setup.public_key,
+        &setup.creator,
+        &setup.counterpart,
+        &proof1,
+        &setup.voting_ends_at,
+    );
+
     let new_creator = soroban_sdk::Address::generate(&setup.env);
     let new_counterpart = soroban_sdk::Address::generate(&setup.env);
-    
-    let dispute2 = setup
-        .contract
-        .create_dispute(&new_creator, &new_counterpart, &proof2);
-    
+
+    let dispute2 = setup.contract.create_dispute(
+        &setup.project_id,
+        &setup.public_key,
+        &new_creator,
+        &new_counterpart,
+        &proof2,
+        &setup.voting_ends_at,
+    );
+
     assert_eq!(dispute1.dispute_id, 1);
     assert_eq!(dispute2.dispute_id, 2);
     assert_ne!(dispute1.creator, dispute2.creator);
@@ -51,7 +66,7 @@ fn test_create_multiple_disputes() {
 fn test_dispute_initial_state() {
     let setup = create_test_data();
     let dispute = init_contract(&setup);
-    
+
     // Verify initial dispute state
     assert_eq!(dispute.dispute_status, DisputeStatus::OPEN);
     // init_contract already calls register_to_vote for judge1, but that doesn't increment able_to_vote
@@ -66,13 +81,18 @@ fn test_dispute_initial_state() {
 fn test_dispute_timestamps() {
     let setup = create_test_data();
     let proof = String::from_str(&setup.env, "PROOF");
-    
+
     let initial_time = setup.env.ledger().timestamp();
-    
-    let dispute = setup
-        .contract
-        .create_dispute(&setup.creator, &setup.counterpart, &proof);
-    
+
+    let dispute = setup.contract.create_dispute(
+        &setup.project_id,
+        &setup.public_key,
+        &setup.creator,
+        &setup.counterpart,
+        &proof,
+        &setup.voting_ends_at,
+    );
+
     assert_eq!(dispute.initial_timestamp, initial_time);
     assert!(dispute.finish_timestamp.is_none());
 }

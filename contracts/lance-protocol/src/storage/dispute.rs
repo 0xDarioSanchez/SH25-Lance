@@ -1,27 +1,28 @@
-use soroban_sdk::{contracttype, Address, String, Vec, Env, BytesN};
 use super::{dispute_status::DisputeStatus, vote::Vote};
-use crate::storage::{error::Error, storage::DataKey};
-
+use crate::storage::{error::Error, storage::DataKey, vote::VoteData};
+use soroban_sdk::{Address, BytesN, Env, String, Vec, contracttype};
 
 #[derive(Clone)]
 #[contracttype]
 pub struct Dispute {
+    pub project_id: u32,
     pub dispute_id: u32,
-    pub able_to_vote: Vec<Address>,        // Judges who can vote
-    pub voters: Vec<Address>,              // Judges who have committed
-    pub vote_commits: Vec<BytesN<32>>,   // Commit hashes
-    pub votes: Vec<Vote>,                  // Revealed votes
+    pub able_to_vote: Vec<Address>,    // Judges who can vote
+    pub voters: Vec<Address>,          // Judges who have committed
+    pub vote_commits: Vec<BytesN<32>>, // Commit hashes
+    pub votes: Vec<Vote>,              // Revealed votes
     pub dispute_status: DisputeStatus,
     pub initial_timestamp: u64,
     pub finish_timestamp: Option<u64>,
     pub creator: Address,
-    pub counterpart: Address,  
+    pub counterpart: Address,
     pub winner: Option<Address>,
-    pub creator_proves: String,      
+    pub creator_proves: String,
     pub counterpart_proves: Option<String>,
     pub waiting_for_judges: bool,
     pub votes_for: u32,
     pub votes_against: u32,
+    pub vote_data: VoteData,
     //TODO add payment: i128, ???
 }
 
