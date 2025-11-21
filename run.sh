@@ -100,9 +100,12 @@ stellar contract invoke \
     --source lance-admin \
     --network testnet \
     -- create_dispute \
+    --project_id 1 \
+    --public_key "BLS12_381_PUBLIC_KEY_PLACEHOLDER" \
     --creator lance-admin \
     --counterpart lance-admin \
-    --proof "Test dispute for protocol testing"
+    --proof "Test dispute for protocol testing" \
+    --voting_ends_at 1735689600
 
 echo "**********************************************************"
 echo -e "\tJudge 1 registering to vote on Dispute 1 ..."
@@ -231,12 +234,41 @@ stellar contract invoke \
     --employee judge-3
 
 echo ""
+echo "**********************************************************"
+echo -e "\tFetching final dispute results ..."
+echo "**********************************************************"
+DISPUTE_RESULT=$(stellar contract invoke \
+    --id lance-protocol \
+    --source lance-admin \
+    --network testnet \
+    -- get_dispute \
+    --dispute_id 1 2>&1 | grep -v "⚠️" | grep -v "ℹ️")
+
+# Debug: Show the raw output
+echo "Debug - Raw dispute result:"
+echo "$DISPUTE_RESULT"
+echo ""
+
+# Extract key information from the dispute result
+VOTES_FOR=$(echo "$DISPUTE_RESULT" | grep -o '"votes_for":[0-9]*' | cut -d':' -f2)
+VOTES_AGAINST=$(echo "$DISPUTE_RESULT" | grep -o '"votes_against":[0-9]*' | cut -d':' -f2)
+STATUS=$(echo "$DISPUTE_RESULT" | grep -o '"dispute_status":"[^"]*"' | cut -d'"' -f4)
+
+# Winner extraction - handle the nested structure
+WINNER=$(echo "$DISPUTE_RESULT" | grep -o '"winner":\s*{"address":"[^"]*"' | sed 's/.*"address":"\([^"]*\)".*/\1/')
+if [ -z "$WINNER" ]; then
+    # Try alternative format
+    WINNER=$(echo "$DISPUTE_RESULT" | grep -o '"winner":\s*"[^"]*"' | cut -d'"' -f4)
+fi
+
+echo ""
 echo "============================================================"
 echo -e "\t✅ DISPUTE RESOLUTION COMPLETE!"
 echo "============================================================"
-echo "Result: 2 votes FOR creator (true), 1 vote AGAINST (false)"
-echo "Winner: lance-admin (the creator)"
-echo "Judges who voted for the winner receive rewards"
+echo "Dispute Status: $STATUS"
+echo "Votes FOR creator: $VOTES_FOR"
+echo "Votes AGAINST creator: $VOTES_AGAINST"
+echo "Winner: $WINNER"
 echo "============================================================"
 echo ""
 

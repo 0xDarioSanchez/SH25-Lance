@@ -5,11 +5,11 @@ use crate::storage::voter::{get_voter, set_voter};
 use crate::storage::{DataKey, Dispute, Voter, error::Error};
 use crate::{
     methods::{
-        admin,
+        admin::anonymous_voting_setup,
         balance::{get_balance, redeem},
         dispute::create_dispute,
         initialize::initialize,
-        vote::{commit_vote, register_to_vote, reveal_votes},
+        vote::{commit_vote, register_to_vote, reveal_votes, build_commitments_from_votes},
     },
     storage::vote,
 };
@@ -28,6 +28,8 @@ pub trait ProtocolContractTrait {
     ) -> Result<(), Error>;
 
     fn get_user(env: Env, user: Address) -> Result<Voter, Error>;
+
+    fn get_dispute(env: Env, dispute_id: u32) -> Result<Dispute, Error>;
 
     fn anonymous_voting_setup(env: Env, maintainer: Address, project_id: u32, public_key: String);
 
@@ -93,58 +95,18 @@ impl ProtocolContractTrait for ProtocolContract {
     /// # Panics
     /// * If the caller is not the contract admin
     fn anonymous_voting_setup(env: Env, judge: Address, project_id: u32, public_key: String) {
-        admin::anonymous_voting_setup(env, judge, project_id, public_key)
+        anonymous_voting_setup(env, judge, project_id, public_key)
     }
 
-    /// Build vote commitments from votes and seeds for anonymous voting.
-    ///
-    /// Creates BLS12-381 commitments for each vote using the formula:
-    /// C = g·vote + h·seed where g and h are generator points on BLS12-381.
-    ///
-    /// Note: This function does not consider voting weights, which are applied
-    /// during the tallying phase. Calling this on the smart contract would reveal
-    /// the votes and seeds, so it must be run either in simulation or client-side.
-    ///
-    /// # Arguments
-    /// * `env` - The environment object
-    /// * `project_key` - Unique identifier for the project
-    /// * `votes` - Vector of vote choices (0=approve, 1=reject, 2=abstain)
-    /// * `seeds` - Vector of random seeds for each vote
-    ///
-    /// # Returns
-    /// * `Vec<BytesN<96>>` - Vector of vote commitments (one per vote)
-    ///
-    /// # Panics
-    /// * If no anonymous voting configuration exists for the project
     fn build_commitments_from_votes(
         env: Env,
         dispute_id: u32,
         votes: Vec<u128>,
         seeds: Vec<u128>,
     ) -> Vec<BytesN<96>> {
-        // Validate that votes and seeds have the same length
-        if votes.len() != seeds.len() {
-            panic_with_error!(&env, &error::Error::TallySeedError);
-        }
-
-        let vote_config = vote::get_anonymous_voting_config(env.clone(), dispute_id);
-
-        let bls12_381 = env.crypto().bls12_381();
-        let seed_generator_point = G1Affine::from_bytes(vote_config.seed_generator_point);
-        let vote_generator_point = G1Affine::from_bytes(vote_config.vote_generator_point);
-
-        let mut commitments = Vec::new(&env);
-        for (vote_, seed_) in votes.iter().zip(seeds.iter()) {
-            let vote_: U256 = U256::from_u128(&env, vote_);
-            let seed_: U256 = U256::from_u128(&env, seed_);
-            let seed_point_ = bls12_381.g1_mul(&seed_generator_point, &seed_.into());
-            let vote_point_ = bls12_381.g1_mul(&vote_generator_point, &vote_.into());
-
-            commitments.push_back(bls12_381.g1_add(&vote_point_, &seed_point_).to_bytes());
-        }
-        commitments
+        build_commitments_from_votes(env, dispute_id, votes, seeds)
     }
-
+    
     fn new_voter(
         env: Env,
         user: Address,
@@ -156,6 +118,10 @@ impl ProtocolContractTrait for ProtocolContract {
 
     fn get_user(env: Env, user: Address) -> Result<Voter, Error> {
         get_voter(&env, user)
+    }
+
+    fn get_dispute(env: Env, dispute_id: u32) -> Result<Dispute, Error> {
+        crate::storage::dispute::get_dispute(&env, dispute_id)
     }
 
     fn get_balance(env: &Env, employee: Address) -> i128 {
