@@ -239,7 +239,7 @@ pub fn build_commitments_from_votes(
         panic_with_error!(&env, &Error::TallySeedError);
     }
 
-    let vote_config = get_anonymous_voting_config(env.clone(), project_id);
+    let vote_config = get_anonymous_voting_config(&env, project_id);
 
     let bls12_381 = env.crypto().bls12_381();
     let seed_generator_point = G1Affine::from_bytes(vote_config.seed_generator_point);

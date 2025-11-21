@@ -4,7 +4,10 @@ use soroban_sdk::contracttype;
 #[contracttype]
 pub enum DisputeStatus {
     OPEN,
-    VOTING, 
+    VOTING,
+    CREATOR,
+    COUNTERPART,
+    ABSTAIN,
     EXECUTED,
     FINISHED,
 }

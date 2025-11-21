@@ -41,4 +41,6 @@ pub enum Error {
     WrongVoter = 34,
     UnknownMember = 35,
     VoterWeight = 36,
+    ProposalActive = 37,
+    InvalidProof = 38,
 }

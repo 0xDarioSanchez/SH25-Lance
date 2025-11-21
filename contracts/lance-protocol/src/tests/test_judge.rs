@@ -1,7 +1,14 @@
-use soroban_sdk::{IntoVal, Map, String, Symbol, Val, testutils::Events, vec};
+use soroban_sdk::{
+    IntoVal, Map, String, Symbol, Val,
+    testutils::{Events, Ledger},
+    vec,
+};
 
 use crate::{
-    storage::vote::{AnonymousVote, Badge, Vote2},
+    storage::{
+        dispute_status::DisputeStatus,
+        vote::{AnonymousVote, Badge, Vote2},
+    },
     tests::test_utils::{create_test_data, init_contract},
 };
 
@@ -14,6 +21,7 @@ fn test_vote_maths() {
     //     .contract
     //     .anonymous_voting_setup(&setup.judge1, &setup.project_id, &public_key);
 
+    let voting_ends_at = setup.env.ledger().timestamp() + 3600 * 24 * 2;
     let dispute = init_contract(&setup);
 
     /*
@@ -53,6 +61,19 @@ fn test_vote_maths() {
     setup
         .contract
         .vote(&setup.judge1, &dispute.dispute_id, &vote_);
+
+    setup.env.ledger().set_timestamp(voting_ends_at + 1);
+
+    let vote_result = setup.contract.execute(
+        &setup.creator,
+        &setup.project_id,
+        &dispute.dispute_id,
+        &Some(vec![&setup.env, 9u128, 3u128, 500003u128]),
+        &Some(vec![&setup.env, 15u128, 12u128, 18u128]),
+    );
+
+    assert_eq!(vote_result, DisputeStatus::CREATOR);
+
     /*
     // test build_commitments_from_votes and abstain
     let abstain_vote = Vote2::AnonymousVote(AnonymousVote {

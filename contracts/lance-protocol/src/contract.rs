@@ -1,9 +1,11 @@
 use crate::events::event;
+use crate::methods::dispute::execute;
+use crate::storage::dispute::get_dispute;
+use crate::storage::dispute_status::DisputeStatus;
 use crate::storage::error;
 use crate::storage::project::Project;
 use crate::storage::vote::Vote2;
 use crate::storage::voter::{get_voter, set_voter};
-use crate::storage::dispute::{get_dispute};
 use crate::storage::{DataKey, Dispute, Voter, error::Error};
 use crate::{
     methods::{
@@ -75,6 +77,15 @@ pub trait ProtocolContractTrait {
     ) -> Result<Dispute, Error>;
 
     fn vote(env: Env, voter: Address, dispute_id: u32, vote_data: Vote2);
+
+    fn execute(
+        env: Env,
+        maintainer: Address,
+        project_id: u32,
+        dispute_id: u32,
+        tallies: Option<Vec<u128>>,
+        seeds: Option<Vec<u128>>,
+    ) -> DisputeStatus;
 }
 
 #[contract]
@@ -183,5 +194,16 @@ impl ProtocolContractTrait for ProtocolContract {
 
     fn vote(env: Env, voter: Address, dispute_id: u32, vote_data: Vote2) {
         vote(env, voter, dispute_id, vote_data);
+    }
+
+    fn execute(
+        env: Env,
+        maintainer: Address,
+        project_id: u32,
+        dispute_id: u32,
+        tallies: Option<Vec<u128>>,
+        seeds: Option<Vec<u128>>,
+    ) -> DisputeStatus {
+        execute(env, maintainer, project_id, dispute_id, tallies, seeds)
     }
 }
