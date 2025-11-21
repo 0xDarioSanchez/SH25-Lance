@@ -135,6 +135,15 @@ fn test_reveal_votes_creator_wins() {
     assert_eq!(resolved_dispute.votes_against, 1);
     assert_eq!(resolved_dispute.winner, Some(setup.creator.clone()));
     assert!(resolved_dispute.finish_timestamp.is_some());
+    
+    // Verify rewards were distributed
+    let judge1_balance = setup.contract.get_balance(&setup.judge1);
+    let judge2_balance = setup.contract.get_balance(&setup.judge2);
+    let judge3_balance = setup.contract.get_balance(&setup.judge3);
+    
+    assert_eq!(judge1_balance, 1_000_000); // Voted TRUE - for winner (creator)
+    assert_eq!(judge2_balance, 1_000_000); // Voted TRUE - for winner (creator)
+    assert_eq!(judge3_balance, 0);         // Voted FALSE - against winner
 }
 
 #[test]
@@ -179,6 +188,15 @@ fn test_reveal_votes_counterpart_wins() {
     assert_eq!(resolved_dispute.votes_for, 1);
     assert_eq!(resolved_dispute.votes_against, 2);
     assert_eq!(resolved_dispute.winner, Some(setup.counterpart.clone()));
+    
+    // Verify rewards were distributed
+    let judge1_balance = setup.contract.get_balance(&setup.judge1);
+    let judge2_balance = setup.contract.get_balance(&setup.judge2);
+    let judge3_balance = setup.contract.get_balance(&setup.judge3);
+    
+    assert_eq!(judge1_balance, 0);         // Voted against winner
+    assert_eq!(judge2_balance, 1_000_000); // Voted for winner
+    assert_eq!(judge3_balance, 1_000_000); // Voted for winner
 }
 
 #[test]

@@ -169,35 +169,35 @@ pub fn reveal_votes(
     dispute.dispute_status = DisputeStatus::FINISHED;
     dispute.finish_timestamp = Some(env.ledger().timestamp());
 
-    // Determine winner
+    // Determine winner and distribute rewards
+    const REWARD_PER_CORRECT_VOTE: i128 = 1_000_000; // 0.1 tokens (7 decimals)
+    
     if dispute.votes_for > dispute.votes_against {
         dispute.winner = Some(dispute.creator.clone());
 
-        // Update balances and reputation for voters
+        // Reward voters who voted for the winner
         for i in 0..dispute.voters.len() {
             let vote_val = dispute.votes.get(i).unwrap().vote;
             let voter_addr = dispute.voters.get(i).unwrap();
 
             if vote_val {
-                // Voted for winner
+                // Voted for winner - add reward
                 let balance = get_balance(env, &voter_addr);
-                // Prize distribution logic would go here
-                set_balance(env, &voter_addr, balance);
+                set_balance(env, &voter_addr, balance + REWARD_PER_CORRECT_VOTE);
             }
         }
     } else {
         dispute.winner = Some(dispute.counterpart.clone());
 
-        // Update balances and reputation for voters
+        // Reward voters who voted for the winner
         for i in 0..dispute.voters.len() {
             let vote_val = dispute.votes.get(i).unwrap().vote;
             let voter_addr = dispute.voters.get(i).unwrap();
 
             if !vote_val {
-                // Voted for winner
+                // Voted for winner - add reward
                 let balance = get_balance(env, &voter_addr);
-                // Prize distribution logic would go here
-                set_balance(env, &voter_addr, balance);
+                set_balance(env, &voter_addr, balance + REWARD_PER_CORRECT_VOTE);
             }
         }
     }

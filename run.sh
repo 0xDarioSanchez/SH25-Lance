@@ -1,6 +1,20 @@
 #!/bin/bash
 set -e
 
+# Lance Protocol - Dispute Resolution Demo Script
+# This script demonstrates the complete workflow of the Lance Protocol:
+# 1. Build and deploy the contract
+# 2. Register judges (voters)
+# 3. Create a dispute
+# 4. Judges register to vote on the dispute
+# 5. Judges commit their votes (encrypted with secrets)
+# 6. Creator reveals all votes at once to determine the winner
+#
+# Voting is a commit-reveal process:
+# - Commit phase: Judges submit hashed votes (vote + secret)
+# - Reveal phase: Creator reveals all votes with their secrets
+# - The contract verifies the secrets match and counts the votes
+
 echo "************************************"
 echo -e "\t*****Building*****..."
 echo "************************************"
@@ -124,9 +138,9 @@ stellar contract invoke \
     --dispute_id 1
 
 echo "**********************************************************"
-echo -e "\tJudge 1 committing vote on Dispute 1 ..."
+echo -e "\tJudge 1 committing vote on Dispute 1 (votes FOR creator) ..."
 echo "**********************************************************"
-# Judge 1 votes TRUE with secret "secret1" (hex: 73656372657431)
+# Judge 1 votes TRUE (for creator) with secret "judge1_secret"
 stellar contract invoke \
     --id lance-protocol \
     --source judge-1 \
@@ -135,12 +149,12 @@ stellar contract invoke \
     --voter judge-1 \
     --dispute_id 1 \
     --vote true \
-    --secret '"73656372657431"'
+    --secret '{"bytes":"6a75646765315f736563726574"}'
 
 echo "**********************************************************"
-echo -e "\tJudge 2 committing vote on Dispute 1 ..."
+echo -e "\tJudge 2 committing vote on Dispute 1 (votes AGAINST creator) ..."
 echo "**********************************************************"
-# Judge 2 votes FALSE with secret "secret2" (hex: 73656372657432)
+# Judge 2 votes FALSE (against creator) with secret "judge2_secret"
 stellar contract invoke \
     --id lance-protocol \
     --source judge-2 \
@@ -149,12 +163,12 @@ stellar contract invoke \
     --voter judge-2 \
     --dispute_id 1 \
     --vote false \
-    --secret '"73656372657432"'
+    --secret '{"bytes":"6a75646765325f736563726574"}'
 
 echo "**********************************************************"
-echo -e "\tJudge 3 committing vote on Dispute 1 ..."
+echo -e "\tJudge 3 committing vote on Dispute 1 (votes FOR creator) ..."
 echo "**********************************************************"
-# Judge 3 votes TRUE with secret "secret3" (hex: 73656372657433)
+# Judge 3 votes TRUE (for creator) with secret "judge3_secret"
 stellar contract invoke \
     --id lance-protocol \
     --source judge-3 \
@@ -163,14 +177,15 @@ stellar contract invoke \
     --voter judge-3 \
     --dispute_id 1 \
     --vote true \
-    --secret '"73656372657433"'
+    --secret '{"bytes":"6a75646765335f736563726574"}'
 
 echo "**********************************************************"
 echo -e "\tDispute creator revealing ALL votes at once ..."
 echo "**********************************************************"
 # Creator reveals all votes with their secrets
+# Result: 2 votes FOR (true), 1 vote AGAINST (false) => Creator wins!
 # Votes: [true, false, true] for judges 1, 2, 3
-# Secrets: ["secret1", "secret2", "secret3"] in hex format
+# Secrets in hex: ["judge1_secret", "judge2_secret", "judge3_secret"]
 stellar contract invoke \
     --id lance-protocol \
     --source lance-admin \
@@ -179,7 +194,7 @@ stellar contract invoke \
     --creator lance-admin \
     --dispute_id 1 \
     --votes '[true, false, true]' \
-    --secrets '["73656372657431", "73656372657432", "73656372657433"]'
+    --secrets '[{"bytes":"6a75646765315f736563726574"}, {"bytes":"6a75646765325f736563726574"}, {"bytes":"6a75646765335f736563726574"}]'
 
 echo "**********************************************************"
 echo -e "\tGetting balance for Admin ..."
@@ -190,6 +205,40 @@ stellar contract invoke \
     --network testnet \
     -- get_balance \
     --employee lance-admin
+
+echo "**********************************************************"
+echo -e "\tGetting balances for judges ..."
+echo "**********************************************************"
+stellar contract invoke \
+    --id lance-protocol \
+    --source judge-1 \
+    --network testnet \
+    -- get_balance \
+    --employee judge-1
+
+stellar contract invoke \
+    --id lance-protocol \
+    --source judge-2 \
+    --network testnet \
+    -- get_balance \
+    --employee judge-2
+
+stellar contract invoke \
+    --id lance-protocol \
+    --source judge-3 \
+    --network testnet \
+    -- get_balance \
+    --employee judge-3
+
+echo ""
+echo "============================================================"
+echo -e "\t✅ DISPUTE RESOLUTION COMPLETE!"
+echo "============================================================"
+echo "Result: 2 votes FOR creator (true), 1 vote AGAINST (false)"
+echo "Winner: lance-admin (the creator)"
+echo "Judges who voted for the winner receive rewards"
+echo "============================================================"
+echo ""
 
 # echo "******************************************************"
 # echo -e "\tOpening contract on Stellar Expert explorer"
