@@ -1,6 +1,7 @@
 use crate::events::event;
 use crate::storage::error;
 use crate::storage::project::Project;
+use crate::storage::vote::Vote2;
 use crate::storage::voter::{get_voter, set_voter};
 use crate::storage::{DataKey, Dispute, Voter, error::Error};
 use crate::{
@@ -9,7 +10,7 @@ use crate::{
         balance::{get_balance, redeem},
         dispute::create_dispute,
         initialize::initialize,
-        vote::{commit_vote, register_to_vote, reveal_votes, build_commitments_from_votes},
+        vote::{build_commitments_from_votes, commit_vote, register_to_vote, reveal_votes},
     },
     storage::vote,
 };
@@ -70,6 +71,8 @@ pub trait ProtocolContractTrait {
         votes: Vec<bool>,
         secrets: Vec<Bytes>,
     ) -> Result<Dispute, Error>;
+
+    fn vote(env: Env, voter: Address, dispute_id: u32, vote: Vote2);
 }
 
 #[contract]
@@ -105,7 +108,7 @@ impl ProtocolContractTrait for ProtocolContract {
     ) -> Vec<BytesN<96>> {
         build_commitments_from_votes(env, dispute_id, votes, seeds)
     }
-    
+
     fn new_voter(
         env: Env,
         user: Address,
@@ -172,5 +175,9 @@ impl ProtocolContractTrait for ProtocolContract {
         secrets: Vec<Bytes>,
     ) -> Result<Dispute, Error> {
         reveal_votes(env, creator, dispute_id, votes, secrets)
+    }
+
+    fn vote(env: Env, voter: Address, dispute_id: u32, vote: Vote2) {
+        crate::methods::vote::vote(env, voter, dispute_id, vote);
     }
 }

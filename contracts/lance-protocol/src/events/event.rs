@@ -17,3 +17,12 @@ pub struct AnonymousDisputeSetup {
     pub creator: Address,
     pub public_key: String,
 }
+
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct VoteCast {
+    #[topic]
+    //pub project_key: Bytes,
+    pub dispute_id: u32,
+    pub voter: Address,
+}

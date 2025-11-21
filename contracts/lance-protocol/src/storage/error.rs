@@ -34,4 +34,11 @@ pub enum Error {
     TallySeedError = 27,
     NoAnonymousVotingConfig = 28,
     AdminNotFound = 29,
+    ProposalVotingTime = 30,
+    VoteLimitExceeded = 31,
+    AlreadyVoted = 32,
+    BadCommitment = 33,
+    WrongVoter = 34,
+    UnknownMember = 35,
+    VoterWeight = 36,
 }

@@ -28,7 +28,7 @@ fn test_vote_maths() {
        );
        assert_eq!(proposal_id, 0);
     */
-    /*
+
     let vote_ = Vote2::AnonymousVote(AnonymousVote {
         address: setup.judge1.clone(),
         weight: 3,
@@ -52,8 +52,8 @@ fn test_vote_maths() {
     });
     setup
         .contract
-        .vote(&setup.judge1, &id, &proposal_id, &vote_);
-
+        .vote(&setup.judge1, &dispute.dispute_id, &vote_);
+    /*
     // test build_commitments_from_votes and abstain
     let abstain_vote = Vote2::AnonymousVote(AnonymousVote {
         address: setup.creator.clone(),

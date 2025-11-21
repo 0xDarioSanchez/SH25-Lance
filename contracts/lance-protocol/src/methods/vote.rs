@@ -1,11 +1,14 @@
 use crate::{
-    methods::balance::{get_balance, set_balance},
+    events,
+    methods::{
+        balance::{get_balance, set_balance},
+        dispute,
+    },
     storage::{
         dispute::{Dispute, get_dispute, set_dispute},
         dispute_status::DisputeStatus,
         error::Error,
-        vote::Vote,
-        vote::get_anonymous_voting_config,
+        vote::{AnonymousVote, Vote, Vote2, get_anonymous_voting_config},
         voter::get_voter,
     },
 };
@@ -16,6 +19,8 @@ use soroban_sdk::{
 //TODO add
 // const VOTE_BASE_POWER: u32 = 1;
 // const MIN_VOTES_TO_FINISH_DISPUTE: u32 = 5;
+
+const MAX_VOTES_PER_PROPOSAL: u32 = 1000; // DoS protection
 
 pub fn register_to_vote(env: &Env, voter: Address, dispute_id: u32) -> Result<Dispute, Error> {
     voter.require_auth();
@@ -93,8 +98,6 @@ pub fn commit_vote(
 
     Ok(dispute)
 }
-
-
 
 pub fn reveal_votes(
     env: &Env,
@@ -252,4 +255,137 @@ pub fn build_commitments_from_votes(
         commitments.push_back(bls12_381.g1_add(&vote_point_, &seed_point_).to_bytes());
     }
     commitments
+}
+
+/// Cast a vote on a proposal.
+///
+/// Allows a member to vote on a proposal.
+/// The vote can be either public or anonymous depending on the proposal configuration.
+/// For public votes, the choice and weight are visible. For anonymous votes, only
+/// the weight is visible, and the choice is encrypted.
+///
+/// # Arguments
+/// * `env` - The environment object
+/// * `voter` - The address of the voter
+/// * `project_key` - The project key identifier
+/// * `proposal_id` - The ID of the proposal to vote on
+/// * `vote` - The vote data (public or anonymous)
+///
+/// # Panics
+/// * If the voter has already voted
+/// * If the voting period has ended
+/// * If the proposal is not active anymore
+/// * If the proposal doesn't exist
+/// * If the voter's weight exceeds their maximum allowed weight
+/// * If the voter is not a member of the project
+pub fn vote(
+    env: Env,
+    voter: Address,
+    /* , project_key: Bytes,*/ dispute_id: u32,
+    vote: Vote2,
+) {
+    ///Tansu::require_not_paused(env.clone());
+    voter.require_auth();
+
+    //let page = proposal_id / MAX_PROPOSALS_PER_PAGE;
+    //let sub_id = proposal_id % MAX_PROPOSALS_PER_PAGE;
+    // let mut dao_page = Self::get_dao(env.clone(), project_key.clone(), page);
+    // let mut proposal = match dao_page.proposals.try_get(sub_id) {
+    //     Ok(Some(proposal)) => proposal,
+    //     _ => panic_with_error!(&env, &errors::ContractErrors::NoProposalorPageFound),
+    // };
+
+    let mut dispute = match get_dispute(&env, dispute_id) {
+        Ok(dispute) => dispute,
+        Err(_) => panic_with_error!(&env, &Error::DisputeNotFound),
+    };
+
+    // Check that voting period has not ended
+    let curr_timestamp = env.ledger().timestamp();
+    if curr_timestamp >= dispute.vote_data.voting_ends_at {
+        panic_with_error!(&env, &Error::ProposalVotingTime);
+    }
+
+    // Check vote limits for DoS protection
+    if dispute.vote_data.votes.len() >= MAX_VOTES_PER_PROPOSAL {
+        panic_with_error!(&env, &Error::VoteLimitExceeded);
+    }
+
+    // only allow to vote once per voter
+    let has_already_voted = dispute.vote_data.votes.iter().any(|vote_| match vote_ {
+        Vote2::AnonymousVote(vote_choice) => vote_choice.address == voter,
+    });
+
+    if has_already_voted {
+        panic_with_error!(&env, &Error::AlreadyVoted);
+    }
+
+    // // proposals are either public or anonymous so only a single type of vote
+    // // can be registered for a given proposal
+    // let is_public_vote = matches!(vote, types::Vote::PublicVote(_));
+    // if is_public_vote != proposal.vote_data.public_voting {
+    //     panic_with_error!(&env, &errors::ContractErrors::WrongVoteType);
+    // }
+
+    // For anonymous votes, validate commitment structure
+    if let Vote2::AnonymousVote(vote_choice) = &vote {
+        if vote_choice.commitments.len() != 3 {
+            panic_with_error!(&env, &Error::BadCommitment)
+        }
+        for commitment in &vote_choice.commitments {
+            G1Affine::from_bytes(commitment);
+        }
+    }
+
+    // can only vote for yourself so address must match
+    let vote_address = match &vote {
+        Vote2::AnonymousVote(vote_choice) => &vote_choice.address,
+    };
+    if vote_address != &voter {
+        panic_with_error!(&env, &Error::WrongVoter);
+    }
+
+    // Voter can use up to their max allowed voting weight
+    let vote_weight = match &vote {
+        Vote2::AnonymousVote(vote_choice) => &vote_choice.weight,
+    };
+
+    // TODO: Restore max weight
+    let voter_max_weight = 100;
+    /*let voter_max_weight = <Tansu as MembershipTrait>::get_max_weight(
+        env.clone(),
+        project_key.clone(),
+        vote_address.clone(),
+    );*/
+
+    if voter_max_weight == 0 {
+        panic_with_error!(&env, &Error::UnknownMember);
+    }
+
+    if vote_weight > &voter_max_weight {
+        panic_with_error!(&env, &Error::VoterWeight);
+    }
+
+    /*let sac_contract = crate::retrieve_contract(&env, types::ContractKey::CollateralContract);
+    let token_stellar = token::StellarAssetClient::new(&env, &sac_contract.address);
+    match token_stellar.try_transfer(&voter, env.current_contract_address(), &VOTE_COLLATERAL) {
+        Ok(..) => (),
+        _ => panic_with_error!(&env, &errors::ContractErrors::CollateralError),
+    }*/
+    // Record the vote
+    dispute.vote_data.votes.push_back(vote.clone());
+
+    // dao_page.proposals.set(sub_id, proposal);
+
+    // env.storage().persistent().set(
+    //     &types::ProjectKey::Dao(project_key.clone(), page),
+    //     &dao_page,
+    // );
+
+    events::VoteCast {
+        //project_key,
+        dispute_id,
+        voter,
+    }
+    .publish(&env);
 }
