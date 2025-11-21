@@ -2,6 +2,8 @@ import { Button, Text } from "@stellar/design-system";
 import { useWallet } from "../hooks/useWallet";
 import type { Dispute } from "../api/types";
 import { deleteDispute } from "../api/disputes";
+import { ViewDisputeButton } from "../components/ViewDisputeButton";
+
 
 interface Props {
   disputes: Dispute[];
@@ -49,13 +51,11 @@ export const DisputeList = ({ disputes, loading, onDelete }: Props) => {
             </div>
 
             <div style={{ display: "flex", gap: "0.5rem" }}>
-              <Button
-                size="sm"
-                variant={isConnected ? "primary" : "secondary"}
+              <ViewDisputeButton
+                id={d.id}
                 disabled={!isConnected || isPending}
-              >
-                View
-              </Button>
+                variant={isConnected ? "primary" : "secondary"}
+              />
 
               <Button
                 size="sm"
