@@ -1,5 +1,7 @@
 import React from "react";
 import { Code, Layout, Text } from "@stellar/design-system";
+import { CreateDisputeButton } from "../components/CreateDisputeButton";
+
 // import { GuessTheNumber } from "../components/GuessTheNumber";
 
 const Home: React.FC = () => (
@@ -36,6 +38,9 @@ const Home: React.FC = () => (
         so you can follow the evolution of the contract and the development of the 
         voting model in real time.
       </Text>
+
+      <CreateDisputeButton />
+
 
     </Layout.Inset>
   </Layout.Content>
