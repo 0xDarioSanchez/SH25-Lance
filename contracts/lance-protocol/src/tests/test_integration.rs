@@ -1,7 +1,7 @@
 use soroban_sdk::{Bytes, String, testutils::Address as _};
 
 use crate::storage::dispute_status::DisputeStatus;
-use crate::tests::test_utils::create_test_data;
+use crate::tests::test_utils::{create_test_data, compute_commit_hash};
 
 #[test]
 fn test_full_dispute_lifecycle() {
@@ -41,15 +41,19 @@ fn test_full_dispute_lifecycle() {
     let secret2 = Bytes::from_slice(&setup.env, b"secret_judge_2");
     let secret3 = Bytes::from_slice(&setup.env, b"secret_judge_3");
 
+    let commit_hash1 = compute_commit_hash(&setup.env, true, &secret1);
+    let commit_hash2 = compute_commit_hash(&setup.env, true, &secret2);
+    let commit_hash3 = compute_commit_hash(&setup.env, false, &secret3);
+
     setup
         .contract
-        .commit_vote(&setup.judge1, &dispute.dispute_id, &true, &secret1);
+        .commit_vote(&setup.judge1, &dispute.dispute_id, &commit_hash1);
     setup
         .contract
-        .commit_vote(&setup.judge2, &dispute.dispute_id, &true, &secret2);
+        .commit_vote(&setup.judge2, &dispute.dispute_id, &commit_hash2);
     setup
         .contract
-        .commit_vote(&setup.judge3, &dispute.dispute_id, &false, &secret3);
+        .commit_vote(&setup.judge3, &dispute.dispute_id, &commit_hash3);
 
     // Step 5: Creator reveals votes
     let votes = soroban_sdk::vec![&setup.env, true, true, false];
@@ -110,12 +114,15 @@ fn test_multiple_disputes_independent() {
     let secret1 = Bytes::from_slice(&setup.env, b"secret_dispute1");
     let secret2 = Bytes::from_slice(&setup.env, b"secret_dispute2");
 
+    let commit_hash1 = compute_commit_hash(&setup.env, true, &secret1);
+    let commit_hash2 = compute_commit_hash(&setup.env, false, &secret2);
+
     setup
         .contract
-        .commit_vote(&setup.judge1, &dispute1.dispute_id, &true, &secret1);
+        .commit_vote(&setup.judge1, &dispute1.dispute_id, &commit_hash1);
     setup
         .contract
-        .commit_vote(&setup.judge1, &dispute2.dispute_id, &false, &secret2);
+        .commit_vote(&setup.judge1, &dispute2.dispute_id, &commit_hash2);
 
     // Verify disputes are independent
     assert_eq!(dispute1.dispute_id, 1);
@@ -158,15 +165,19 @@ fn test_unanimous_vote_for_creator() {
     let secret2 = Bytes::from_slice(&setup.env, b"s2");
     let secret3 = Bytes::from_slice(&setup.env, b"s3");
 
+    let commit_hash1 = compute_commit_hash(&setup.env, true, &secret1);
+    let commit_hash2 = compute_commit_hash(&setup.env, true, &secret2);
+    let commit_hash3 = compute_commit_hash(&setup.env, true, &secret3);
+
     setup
         .contract
-        .commit_vote(&setup.judge1, &dispute.dispute_id, &true, &secret1);
+        .commit_vote(&setup.judge1, &dispute.dispute_id, &commit_hash1);
     setup
         .contract
-        .commit_vote(&setup.judge2, &dispute.dispute_id, &true, &secret2);
+        .commit_vote(&setup.judge2, &dispute.dispute_id, &commit_hash2);
     setup
         .contract
-        .commit_vote(&setup.judge3, &dispute.dispute_id, &true, &secret3);
+        .commit_vote(&setup.judge3, &dispute.dispute_id, &commit_hash3);
 
     // Reveal
     let votes = soroban_sdk::vec![&setup.env, true, true, true];
@@ -217,15 +228,19 @@ fn test_unanimous_vote_for_counterpart() {
     let secret2 = Bytes::from_slice(&setup.env, b"s2");
     let secret3 = Bytes::from_slice(&setup.env, b"s3");
 
+    let commit_hash1 = compute_commit_hash(&setup.env, false, &secret1);
+    let commit_hash2 = compute_commit_hash(&setup.env, false, &secret2);
+    let commit_hash3 = compute_commit_hash(&setup.env, false, &secret3);
+
     setup
         .contract
-        .commit_vote(&setup.judge1, &dispute.dispute_id, &false, &secret1);
+        .commit_vote(&setup.judge1, &dispute.dispute_id, &commit_hash1);
     setup
         .contract
-        .commit_vote(&setup.judge2, &dispute.dispute_id, &false, &secret2);
+        .commit_vote(&setup.judge2, &dispute.dispute_id, &commit_hash2);
     setup
         .contract
-        .commit_vote(&setup.judge3, &dispute.dispute_id, &false, &secret3);
+        .commit_vote(&setup.judge3, &dispute.dispute_id, &commit_hash3);
 
     // Reveal
     let votes = soroban_sdk::vec![&setup.env, false, false, false];
@@ -263,9 +278,10 @@ fn test_single_judge_decides() {
         .register_to_vote(&setup.judge1, &dispute.dispute_id);
 
     let secret = Bytes::from_slice(&setup.env, b"solo_secret");
+    let commit_hash = compute_commit_hash(&setup.env, true, &secret);
     setup
         .contract
-        .commit_vote(&setup.judge1, &dispute.dispute_id, &true, &secret);
+        .commit_vote(&setup.judge1, &dispute.dispute_id, &commit_hash);
 
     let votes = soroban_sdk::vec![&setup.env, true];
     let secrets = soroban_sdk::vec![&setup.env, secret];
@@ -323,9 +339,10 @@ fn test_large_number_of_judges() {
         };
         let secret = Bytes::from_slice(&setup.env, secret_bytes);
 
+        let commit_hash = compute_commit_hash(&setup.env, vote, &secret);
         setup
             .contract
-            .commit_vote(&judge, &dispute.dispute_id, &vote, &secret);
+            .commit_vote(&judge, &dispute.dispute_id, &commit_hash);
 
         votes.push_back(vote);
         secrets.push_back(secret);

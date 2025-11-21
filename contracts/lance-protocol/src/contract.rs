@@ -60,8 +60,7 @@ pub trait ProtocolContractTrait {
         env: &Env,
         voter: Address,
         dispute_id: u32,
-        vote: bool,
-        secret: Bytes,
+        commit_hash: BytesN<32>,
     ) -> Result<Dispute, Error>;
 
     fn reveal_votes(
@@ -160,10 +159,9 @@ impl ProtocolContractTrait for ProtocolContract {
         env: &Env,
         voter: Address,
         dispute_id: u32,
-        vote: bool,
-        secret: Bytes,
+        commit_hash: BytesN<32>,
     ) -> Result<Dispute, Error> {
-        commit_vote(env, voter, dispute_id, vote, secret)
+        commit_vote(env, voter, dispute_id, commit_hash)
     }
 
     fn reveal_votes(

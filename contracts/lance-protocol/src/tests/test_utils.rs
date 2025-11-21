@@ -1,12 +1,22 @@
 //use crate::{Tansu, TansuClient, domain_contract, outcomes_contract, types};
 use soroban_sdk::testutils::{Address as _, Events};
 use soroban_sdk::{
-    Address, Bytes, Env, Executable, IntoVal, Map, String, Symbol, Val, Vec, token, vec,
+    Address, Bytes, BytesN, Env, Executable, IntoVal, Map, String, Symbol, Val, Vec, token, vec,
 };
 
 use crate::ProtocolContract;
 use crate::contract::ProtocolContractClient;
 use crate::storage::Dispute;
+
+/// Helper function to compute commit hash off-chain
+/// Hash = SHA256(vote_string || secret)
+pub fn compute_commit_hash(env: &Env, vote: bool, secret: &Bytes) -> BytesN<32> {
+    let vote_str = if vote { "true" } else { "false" };
+    let mut data = Bytes::new(env);
+    data.append(&Bytes::from_slice(env, vote_str.as_bytes()));
+    data.append(secret);
+    env.crypto().sha256(&data).into()
+}
 
 pub struct TestSetup {
     pub env: Env,

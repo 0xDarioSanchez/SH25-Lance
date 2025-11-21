@@ -49,8 +49,7 @@ pub fn commit_vote(
     env: &Env,
     voter: Address,
     dispute_id: u32,
-    vote: bool,
-    secret: Bytes,
+    commit_hash: BytesN<32>,
 ) -> Result<Dispute, Error> {
     voter.require_auth();
 
@@ -85,14 +84,8 @@ pub fn commit_vote(
         }
     }
 
-    // Compute commit hash: SHA256(vote_string || secret)
-    let vote_str = if vote { "true" } else { "false" };
-    let mut data = Bytes::new(env);
-    data.append(&Bytes::from_slice(env, vote_str.as_bytes()));
-    data.append(&secret);
-    let commit_hash: BytesN<32> = env.crypto().sha256(&data).into();
-
-    // Store commit
+    // Store the commit hash provided by the judge
+    // Judge computes this off-chain as: SHA256(vote_string || secret)
     dispute.voters.push_back(voter);
     dispute.vote_commits.push_back(commit_hash);
 
@@ -100,6 +93,8 @@ pub fn commit_vote(
 
     Ok(dispute)
 }
+
+
 
 pub fn reveal_votes(
     env: &Env,

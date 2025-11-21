@@ -144,6 +144,9 @@ echo "**********************************************************"
 echo -e "\tJudge 1 committing vote on Dispute 1 (votes FOR creator) ..."
 echo "**********************************************************"
 # Judge 1 votes TRUE (for creator) with secret "judge1_secret"
+# Compute commit hash: SHA256("true" || "judge1_secret")
+COMMIT_HASH_1=$(echo -n "truejudge1_secret" | sha256sum | awk '{print $1}')
+echo "Commit hash 1: $COMMIT_HASH_1"
 stellar contract invoke \
     --id lance-protocol \
     --source judge-1 \
@@ -151,13 +154,15 @@ stellar contract invoke \
     -- commit_vote \
     --voter judge-1 \
     --dispute_id 1 \
-    --vote true \
-    --secret '{"bytes":"6a75646765315f736563726574"}'
+    --commit_hash "{\"bytes\":\"$COMMIT_HASH_1\"}"
 
 echo "**********************************************************"
 echo -e "\tJudge 2 committing vote on Dispute 1 (votes AGAINST creator) ..."
 echo "**********************************************************"
 # Judge 2 votes FALSE (against creator) with secret "judge2_secret"
+# Compute commit hash: SHA256("false" || "judge2_secret")
+COMMIT_HASH_2=$(echo -n "falsejudge2_secret" | sha256sum | awk '{print $1}')
+echo "Commit hash 2: $COMMIT_HASH_2"
 stellar contract invoke \
     --id lance-protocol \
     --source judge-2 \
@@ -165,13 +170,15 @@ stellar contract invoke \
     -- commit_vote \
     --voter judge-2 \
     --dispute_id 1 \
-    --vote false \
-    --secret '{"bytes":"6a75646765325f736563726574"}'
+    --commit_hash "{\"bytes\":\"$COMMIT_HASH_2\"}"
 
 echo "**********************************************************"
 echo -e "\tJudge 3 committing vote on Dispute 1 (votes FOR creator) ..."
 echo "**********************************************************"
 # Judge 3 votes TRUE (for creator) with secret "judge3_secret"
+# Compute commit hash: SHA256("true" || "judge3_secret")
+COMMIT_HASH_3=$(echo -n "truejudge3_secret" | sha256sum | awk '{print $1}')
+echo "Commit hash 3: $COMMIT_HASH_3"
 stellar contract invoke \
     --id lance-protocol \
     --source judge-3 \
@@ -179,8 +186,7 @@ stellar contract invoke \
     -- commit_vote \
     --voter judge-3 \
     --dispute_id 1 \
-    --vote true \
-    --secret '{"bytes":"6a75646765335f736563726574"}'
+    --commit_hash "{\"bytes\":\"$COMMIT_HASH_3\"}"
 
 echo "**********************************************************"
 echo -e "\tDispute creator revealing ALL votes at once ..."

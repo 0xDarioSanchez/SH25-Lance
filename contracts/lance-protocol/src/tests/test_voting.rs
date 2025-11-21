@@ -1,6 +1,6 @@
 use soroban_sdk::Bytes;
 
-use crate::tests::test_utils::{create_test_data, init_contract};
+use crate::tests::test_utils::{create_test_data, init_contract, compute_commit_hash};
 use crate::storage::dispute_status::DisputeStatus;
 
 #[test]
@@ -36,10 +36,11 @@ fn test_commit_vote_success() {
     
     let vote = true;
     let secret = Bytes::from_slice(&setup.env, b"my_secret_123");
+    let commit_hash = compute_commit_hash(&setup.env, vote, &secret);
     
     let updated_dispute = setup
         .contract
-        .commit_vote(&setup.judge1, &dispute.dispute_id, &vote, &secret);
+        .commit_vote(&setup.judge1, &dispute.dispute_id, &commit_hash);
     
     assert_eq!(updated_dispute.voters.len(), 1);
     assert_eq!(updated_dispute.vote_commits.len(), 1);
@@ -66,17 +67,21 @@ fn test_multiple_judges_commit() {
     let secret2 = Bytes::from_slice(&setup.env, b"secret_2");
     let secret3 = Bytes::from_slice(&setup.env, b"secret_3");
     
-    setup
-        .contract
-        .commit_vote(&setup.judge1, &dispute.dispute_id, &true, &secret1);
+    let commit1 = compute_commit_hash(&setup.env, true, &secret1);
+    let commit2 = compute_commit_hash(&setup.env, true, &secret2);
+    let commit3 = compute_commit_hash(&setup.env, false, &secret3);
     
     setup
         .contract
-        .commit_vote(&setup.judge2, &dispute.dispute_id, &true, &secret2);
+        .commit_vote(&setup.judge1, &dispute.dispute_id, &commit1);
+    
+    setup
+        .contract
+        .commit_vote(&setup.judge2, &dispute.dispute_id, &commit2);
     
     let updated_dispute = setup
         .contract
-        .commit_vote(&setup.judge3, &dispute.dispute_id, &false, &secret3);
+        .commit_vote(&setup.judge3, &dispute.dispute_id, &commit3);
     
     assert_eq!(updated_dispute.voters.len(), 3);
     assert_eq!(updated_dispute.vote_commits.len(), 3);
@@ -112,15 +117,19 @@ fn test_reveal_votes_creator_wins() {
     let secret2 = Bytes::from_slice(&setup.env, b"secret_2");
     let secret3 = Bytes::from_slice(&setup.env, b"secret_3");
     
+    let commit1 = compute_commit_hash(&setup.env, true, &secret1);
+    let commit2 = compute_commit_hash(&setup.env, true, &secret2);
+    let commit3 = compute_commit_hash(&setup.env, false, &secret3);
+    
     setup
         .contract
-        .commit_vote(&setup.judge1, &dispute.dispute_id, &true, &secret1);
+        .commit_vote(&setup.judge1, &dispute.dispute_id, &commit1);
     setup
         .contract
-        .commit_vote(&setup.judge2, &dispute.dispute_id, &true, &secret2);
+        .commit_vote(&setup.judge2, &dispute.dispute_id, &commit2);
     setup
         .contract
-        .commit_vote(&setup.judge3, &dispute.dispute_id, &false, &secret3);
+        .commit_vote(&setup.judge3, &dispute.dispute_id, &commit3);
     
     // Reveal votes
     let votes = soroban_sdk::vec![&setup.env, true, true, false];
@@ -166,15 +175,19 @@ fn test_reveal_votes_counterpart_wins() {
     let secret2 = Bytes::from_slice(&setup.env, b"secret_2");
     let secret3 = Bytes::from_slice(&setup.env, b"secret_3");
     
+    let commit1 = compute_commit_hash(&setup.env, true, &secret1);
+    let commit2 = compute_commit_hash(&setup.env, false, &secret2);
+    let commit3 = compute_commit_hash(&setup.env, false, &secret3);
+    
     setup
         .contract
-        .commit_vote(&setup.judge1, &dispute.dispute_id, &true, &secret1);
+        .commit_vote(&setup.judge1, &dispute.dispute_id, &commit1);
     setup
         .contract
-        .commit_vote(&setup.judge2, &dispute.dispute_id, &false, &secret2);
+        .commit_vote(&setup.judge2, &dispute.dispute_id, &commit2);
     setup
         .contract
-        .commit_vote(&setup.judge3, &dispute.dispute_id, &false, &secret3);
+        .commit_vote(&setup.judge3, &dispute.dispute_id, &commit3);
     
     // Reveal votes
     let votes = soroban_sdk::vec![&setup.env, true, false, false];
@@ -205,9 +218,10 @@ fn test_reveal_vote_errors() {
     let dispute = init_contract(&setup);
     
     let secret1 = Bytes::from_slice(&setup.env, b"secret_1");
+    let commit1 = compute_commit_hash(&setup.env, true, &secret1);
     setup
         .contract
-        .commit_vote(&setup.judge1, &dispute.dispute_id, &true, &secret1);
+        .commit_vote(&setup.judge1, &dispute.dispute_id, &commit1);
     
     // Test various error conditions:
     // - Only creator can reveal (enforced by contract)
