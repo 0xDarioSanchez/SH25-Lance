@@ -1,6 +1,6 @@
 //use crate::{Tansu, TansuClient, domain_contract, outcomes_contract, types};
 use soroban_sdk::testutils::Address as _;
-use soroban_sdk::{Address, Bytes, Env, Executable, String, Vec, token, vec};
+use soroban_sdk::{Address, Env, String, token};
 
 use crate::ProtocolContract;
 use crate::contract::ProtocolContractClient;
@@ -38,7 +38,7 @@ pub fn create_test_data() -> TestSetup {
     //let domain_id = env.register(domain_contract::WASM, ());
     //let domain = domain_contract::Client::new(&env, &domain_id);
 
-    let adm = Address::generate(&env);
+    let _adm = Address::generate(&env);
     //let node_rate: u128 = 100;
     //let min_duration: u64 = 31_536_000;
     /*let allowed_tlds: Vec<Bytes> = Vec::from_array(
@@ -116,12 +116,12 @@ pub fn create_test_data() -> TestSetup {
 }
 
 pub fn init_contract(setup: &TestSetup) -> Dispute {
-    let name = String::from_str(&setup.env, "tansu");
-    let url = String::from_str(&setup.env, "github.com/tansu");
-    let ipfs = String::from_str(&setup.env, "2ef4f49fdd8fa9dc463f1f06a094c26b88710990");
+    let _name = String::from_str(&setup.env, "tansu");
+    let _url = String::from_str(&setup.env, "github.com/tansu");
+    let _ipfs = String::from_str(&setup.env, "2ef4f49fdd8fa9dc463f1f06a094c26b88710990");
     //let maintainers = vec![&setup.env, setup.grogu.clone(), setup.mando.clone()];
 
-    let genesis_amount: i128 = 1_000_000_000 * 10_000_000;
+    let _genesis_amount: i128 = 1_000_000_000 * 10_000_000;
     //setup.token_stellar.mint(&setup.grogu, &genesis_amount);
     //setup.token_stellar.mint(&setup.mando, &genesis_amount);
 

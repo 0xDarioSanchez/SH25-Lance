@@ -1,4 +1,4 @@
-use soroban_sdk::{Env, IntoVal, Map, String, Symbol, Val, testutils::Events, vec};
+use soroban_sdk::{IntoVal, Map, String, Symbol, Val, testutils::Events, vec};
 
 use crate::tests::test_utils::{create_test_data, init_contract};
 
