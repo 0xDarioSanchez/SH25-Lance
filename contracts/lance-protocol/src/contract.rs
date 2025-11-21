@@ -49,6 +49,7 @@ pub trait ProtocolContractTrait {
         counterpart: Address,
         proof: String,
         voting_ends_at: u64,
+        called_contract: Address,
     ) -> Result<Dispute, Error>;
 
     fn get_balance(env: &Env, employee: Address) -> i128;
@@ -138,6 +139,7 @@ impl ProtocolContractTrait for ProtocolContract {
         counterpart: Address,
         proof: String,
         voting_ends_at: u64,
+        called_contract: Address,
     ) -> Result<Dispute, Error> {
         create_dispute(
             env,
@@ -147,6 +149,7 @@ impl ProtocolContractTrait for ProtocolContract {
             counterpart,
             proof,
             voting_ends_at,
+            called_contract,
         )
     }
 

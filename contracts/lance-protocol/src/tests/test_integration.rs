@@ -21,6 +21,7 @@ fn test_full_dispute_lifecycle() {
         &setup.counterpart,
         &proof,
         &setup.voting_ends_at,
+        &setup.contract_id,
     );
 
     assert_eq!(dispute.dispute_status, DisputeStatus::OPEN);
@@ -85,6 +86,7 @@ fn test_multiple_disputes_independent() {
         &setup.counterpart,
         &proof1,
         &setup.voting_ends_at,
+        &setup.contract_id,
     );
 
     // Create second dispute with different parties
@@ -99,6 +101,7 @@ fn test_multiple_disputes_independent() {
         &counterpart2,
         &proof2,
         &setup.voting_ends_at,
+        &setup.contract_id,
     );
 
     // Register same judges for both disputes
@@ -147,6 +150,7 @@ fn test_unanimous_vote_for_creator() {
         &setup.counterpart,
         &proof,
         &setup.voting_ends_at,
+        &setup.contract_id,
     );
 
     // All judges register
@@ -210,6 +214,7 @@ fn test_unanimous_vote_for_counterpart() {
         &setup.counterpart,
         &proof,
         &setup.voting_ends_at,
+        &setup.contract_id,
     );
 
     // All judges register
@@ -271,6 +276,7 @@ fn test_single_judge_decides() {
         &setup.counterpart,
         &proof,
         &setup.voting_ends_at,
+        &setup.contract_id,
     );
 
     setup
@@ -308,6 +314,7 @@ fn test_large_number_of_judges() {
         &setup.counterpart,
         &proof,
         &setup.voting_ends_at,
+        &setup.contract_id,
     );
 
     // Create 5 judges

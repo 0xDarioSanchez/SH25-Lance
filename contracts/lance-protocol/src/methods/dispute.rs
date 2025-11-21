@@ -18,6 +18,7 @@ pub fn create_dispute(
     counterpart: Address,
     proof: String,
     voting_ends_at: u64,
+    called_contract: Address,
 ) -> Result<Dispute, Error> {
     admin::require_admin(env);
     //    creator.require_auth();
@@ -95,6 +96,7 @@ pub fn create_dispute(
         votes_against: 0,
         //TODO payment: 0,
         vote_data,
+        called_contract,
     };
 
     set_dispute(env, new_dispute_id, dispute.clone());

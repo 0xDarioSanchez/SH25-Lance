@@ -153,6 +153,7 @@ pub fn init_contract(setup: &TestSetup) -> Dispute {
         &setup.counterpart,
         &setup.proof,
         &setup.voting_ends_at,
+        &setup.contract_id,
     );
 
     let all_events = setup.env.events().all();

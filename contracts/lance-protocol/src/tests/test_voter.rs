@@ -67,6 +67,7 @@ fn test_voter_can_be_judge() {
         &setup.counterpart,
         &setup.proof,
         &setup.voting_ends_at,
+        &setup.contract_id,
     );
 
     // Register the voter as a judge

@@ -16,6 +16,7 @@ fn test_create_dispute_success() {
         &setup.counterpart,
         &proof,
         &setup.voting_ends_at,
+        &setup.contract_id,
     );
 
     assert_eq!(dispute.dispute_id, 1);
@@ -25,6 +26,7 @@ fn test_create_dispute_success() {
     assert_eq!(dispute.dispute_status, DisputeStatus::OPEN);
     assert_eq!(dispute.votes_for, 0);
     assert_eq!(dispute.votes_against, 0);
+    assert_eq!(dispute.called_contract, setup.contract_id);
     assert!(dispute.winner.is_none());
     assert!(dispute.finish_timestamp.is_none());
 }
@@ -43,6 +45,7 @@ fn test_create_multiple_disputes() {
         &setup.counterpart,
         &proof1,
         &setup.voting_ends_at,
+        &setup.contract_id,
     );
 
     let new_creator = soroban_sdk::Address::generate(&setup.env);
@@ -55,6 +58,7 @@ fn test_create_multiple_disputes() {
         &new_counterpart,
         &proof2,
         &setup.voting_ends_at,
+        &setup.contract_id,
     );
 
     assert_eq!(dispute1.dispute_id, 1);
@@ -91,6 +95,7 @@ fn test_dispute_timestamps() {
         &setup.counterpart,
         &proof,
         &setup.voting_ends_at,
+        &setup.contract_id,
     );
 
     assert_eq!(dispute.initial_timestamp, initial_time);

@@ -105,7 +105,8 @@ stellar contract invoke \
     --creator lance-admin \
     --counterpart lance-admin \
     --proof "Test dispute for protocol testing" \
-    --voting_ends_at 1735689600
+    --voting_ends_at 1735689600 \
+    --called_contract lance-protocol
 
 echo "**********************************************************"
 echo -e "\tJudge 1 registering to vote on Dispute 1 ..."

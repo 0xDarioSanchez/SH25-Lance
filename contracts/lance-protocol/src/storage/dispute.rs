@@ -23,6 +23,7 @@ pub struct Dispute {
     pub votes_for: u32,
     pub votes_against: u32,
     pub vote_data: VoteData,
+    pub called_contract: Address,
     //TODO add payment: i128, ???
 }
 
