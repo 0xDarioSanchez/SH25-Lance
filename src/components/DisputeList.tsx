@@ -4,7 +4,6 @@ import type { Dispute } from "../api/types";
 import { deleteDispute } from "../api/disputes";
 import { ViewDisputeButton } from "../components/ViewDisputeButton";
 
-
 interface Props {
   disputes: Dispute[];
   loading: boolean;
@@ -19,7 +18,6 @@ export const DisputeList = ({ disputes, loading, onDelete }: Props) => {
     if (!isConnected || isPending) return;
 
     await deleteDispute(id);
-
     onDelete();
   };
 
@@ -56,6 +54,16 @@ export const DisputeList = ({ disputes, loading, onDelete }: Props) => {
                 disabled={!isConnected || isPending}
                 variant={isConnected ? "primary" : "secondary"}
               />
+
+              {/* NEW: Close button (conceptual) */}
+              <Button
+                size="sm"
+                variant="tertiary"
+                disabled={!isConnected || isPending}
+                onClick={() => {}}
+              >
+                Close
+              </Button>
 
               <Button
                 size="sm"
