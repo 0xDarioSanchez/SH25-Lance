@@ -110,6 +110,7 @@ pub fn create_dispute(
     // event::AnonymousDisputeSetup {
     //     project_id,
     //     creator,
+    //     public_key,
     // }
     // .publish(&env);
 
