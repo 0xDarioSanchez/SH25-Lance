@@ -39,7 +39,7 @@ export const CreateDisputeButton = ({ onCreated }: Props) => {
       // Note: public_key is now set separately via anonymous_voting_setup
       const result = await callContract({
         contractId: LANCE_CONTRACT_ID,
-        method: "create_dispute",
+        method: "create_dispute_demo",
         args: [
           u32ToScVal(1), // project_id
           addressToScVal(address), // creator
