@@ -10,4 +10,5 @@ pub enum DataKey {
     DisputeId,
     Balances(Address),
     AnonymousVoteConfig(u32),
+    RewardClaimed(u32, Address), // (dispute_id, voter_address)
 }

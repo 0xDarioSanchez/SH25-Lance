@@ -1,10 +1,10 @@
 use crate::events::event;
-use crate::methods::dispute::{execute, proof};
+use crate::methods::dispute::{execute, proof, claim_reward};
 use crate::storage::dispute::get_dispute;
 use crate::storage::dispute_status::DisputeStatus;
 use crate::storage::error;
 use crate::storage::project::Project;
-use crate::storage::vote::{Vote2, AnonymousVoteConfig, get_anonymous_voting_config as get_anon_config};
+use crate::storage::vote::{VoteAnon, AnonymousVoteConfig, get_anonymous_voting_config as get_anon_config};
 use crate::storage::voter::{get_voter, set_voter};
 use crate::storage::{DataKey, Dispute, Voter, error::Error};
 use crate::{
@@ -77,16 +77,21 @@ pub trait ProtocolContractTrait {
         secrets: Vec<Bytes>,
     ) -> Result<Dispute, Error>;
 
-    fn vote(env: Env, voter: Address, dispute_id: u32, vote_data: Vote2);
+    fn vote(env: Env, voter: Address, dispute_id: u32, vote_data: VoteAnon);
 
     fn execute(
         env: Env,
         maintainer: Address,
-        project_id: u32,
         dispute_id: u32,
         tallies: Option<Vec<u128>>,
         seeds: Option<Vec<u128>>,
     ) -> DisputeStatus;
+
+    fn claim_reward(
+        env: Env,
+        voter: Address,
+        dispute_id: u32,
+    ) -> Result<(), Error>;
 
     fn proof(
         env: Env,
@@ -190,19 +195,26 @@ impl ProtocolContractTrait for ProtocolContract {
         reveal_votes(env, creator, dispute_id, votes, secrets)
     }
 
-    fn vote(env: Env, voter: Address, dispute_id: u32, vote_data: Vote2) {
+    fn vote(env: Env, voter: Address, dispute_id: u32, vote_data: VoteAnon) {
         vote(env, voter, dispute_id, vote_data);
     }
 
     fn execute(
         env: Env,
         maintainer: Address,
-        project_id: u32,
         dispute_id: u32,
         tallies: Option<Vec<u128>>,
         seeds: Option<Vec<u128>>,
     ) -> DisputeStatus {
-        execute(env, maintainer, project_id, dispute_id, tallies, seeds)
+        execute(env, maintainer, dispute_id, tallies, seeds)
+    }
+
+    fn claim_reward(
+        env: Env,
+        voter: Address,
+        dispute_id: u32,
+    ) -> Result<(), Error> {
+        claim_reward(env, voter, dispute_id)
     }
 
     fn proof(

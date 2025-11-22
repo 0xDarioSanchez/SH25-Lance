@@ -249,8 +249,8 @@ export const VotingPanel = ({ disputeId, onVoteCast }: VotingPanelProps) => {
         }),
       ]);
 
-      // Wrap in Vote2::AnonymousVote enum
-      const vote2Enum = xdr.ScVal.scvVec([
+      // Wrap in VoteAnon::AnonymousVote enum
+      const VoteAnonEnum = xdr.ScVal.scvVec([
         xdr.ScVal.scvSymbol("AnonymousVote"),
         anonymousVoteStruct
       ]);
@@ -261,7 +261,7 @@ export const VotingPanel = ({ disputeId, onVoteCast }: VotingPanelProps) => {
         args: [
           addressToScVal(address),
           u32ToScVal(disputeId),
-          vote2Enum,
+          VoteAnonEnum,
         ],
         publicKey: address,
         signTransaction,

@@ -1,7 +1,6 @@
 use soroban_sdk::{Address, Bytes, Env, String, panic_with_error};
 
 use crate::{
-    events::event,
     storage::{
         self, DataKey,
         error::{self, Error},

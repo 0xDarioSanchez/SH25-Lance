@@ -11,7 +11,7 @@ pub struct Vote {
 
 #[contracttype]
 #[derive(Clone, Debug, PartialEq)]
-pub enum Vote2 {
+pub enum VoteAnon {
     //PublicVote(PublicVote),
     AnonymousVote(AnonymousVote),
 }
@@ -49,7 +49,7 @@ pub enum Badge {
 pub struct VoteData {
     pub voting_ends_at: u64,
     //pub public_voting: bool,
-    pub votes: Vec<Vote2>,
+    pub votes: Vec<VoteAnon>,
 }
 
 /// Get the anonymous voting configuration for a project.

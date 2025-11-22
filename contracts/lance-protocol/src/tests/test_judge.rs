@@ -7,7 +7,7 @@ use soroban_sdk::{
 use crate::{
     storage::{
         dispute_status::DisputeStatus,
-        vote::{AnonymousVote, Badge, Vote2},
+        vote::{AnonymousVote, Badge, VoteAnon},
     },
     tests::test_utils::{create_test_data, init_contract},
 };
@@ -37,7 +37,7 @@ fn test_vote_maths() {
        assert_eq!(proposal_id, 0);
     */
 
-    let vote_ = Vote2::AnonymousVote(AnonymousVote {
+    let vote_ = VoteAnon::AnonymousVote(AnonymousVote {
         address: setup.judge1.clone(),
         weight: 3,
         encrypted_seeds: vec![
@@ -66,7 +66,6 @@ fn test_vote_maths() {
 
     let vote_result = setup.contract.execute(
         &setup.creator,
-        &setup.project_id,
         &dispute.dispute_id,
         &Some(vec![&setup.env, 9u128, 3u128, 3u128]),
         &Some(vec![&setup.env, 15u128, 12u128, 18u128]),
@@ -76,7 +75,7 @@ fn test_vote_maths() {
 
     /*
     // test build_commitments_from_votes and abstain
-    let abstain_vote = Vote2::AnonymousVote(AnonymousVote {
+    let abstain_vote = VoteAnon::AnonymousVote(AnonymousVote {
         address: setup.creator.clone(),
         weight: Badge::Verified as u32,
         encrypted_seeds: vec![

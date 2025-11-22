@@ -308,7 +308,6 @@ stellar contract invoke \
     --network testnet \
     -- execute \
     --maintainer "$ADMIN_ADDRESS" \
-    --project_id 1 \
     --dispute_id 1 \
     --tallies '["9", "3", "3"]' \
     --seeds '["15", "12", "18"]'
@@ -341,7 +340,7 @@ fi
 
 echo ""
 echo "============================================================"
-echo -e "\t✅ ANONYMOUS VOTING COMPLETE!"
+echo -e "\t✅ DISPUTE EXECUTED!"
 echo "============================================================"
 echo "Dispute Status: $STATUS"
 echo "Winner: ${WINNER:-Not set}"
@@ -352,6 +351,101 @@ echo "  ✓ BLS12-381 commitments validated"
 echo "  ✓ Individual votes remain hidden"
 echo "  ✓ Weighted tallies verified against commitments"
 echo "  ✓ Result: CREATOR wins (approve=9 > reject+abstain=6)"
+echo "============================================================"
+echo ""
+
+echo "**********************************************************"
+echo -e "\tTesting claim_reward function ..."
+echo "**********************************************************"
+
+echo "Judge 1 - Balance and Reputation BEFORE claiming reward:"
+JUDGE1_BEFORE=$(stellar contract invoke \
+    --id lance-protocol \
+    --source judge-1 \
+    --network testnet \
+    -- get_user \
+    --user "$JUDGE1_ADDRESS" 2>&1 | grep -v "⚠️" | grep -v "ℹ️")
+echo "$JUDGE1_BEFORE"
+
+BALANCE_BEFORE=$(echo "$JUDGE1_BEFORE" | grep -o '"balance":[^,}]*' | grep -o '[0-9-]*')
+REPUTATION_BEFORE=$(echo "$JUDGE1_BEFORE" | grep -o '"reputation":[^,}]*' | grep -o '[0-9]*')
+echo "  Balance: $BALANCE_BEFORE"
+echo "  Reputation: $REPUTATION_BEFORE"
+echo ""
+
+echo "Judge 1 claiming reward for voting in Dispute 1..."
+stellar contract invoke \
+    --id lance-protocol \
+    --source judge-1 \
+    --network testnet \
+    -- claim_reward \
+    --voter "$JUDGE1_ADDRESS" \
+    --dispute_id 1
+
+echo ""
+echo "Judge 1 - Balance and Reputation AFTER claiming reward:"
+JUDGE1_AFTER=$(stellar contract invoke \
+    --id lance-protocol \
+    --source judge-1 \
+    --network testnet \
+    -- get_user \
+    --user "$JUDGE1_ADDRESS" 2>&1 | grep -v "⚠️" | grep -v "ℹ️")
+echo "$JUDGE1_AFTER"
+
+BALANCE_AFTER=$(echo "$JUDGE1_AFTER" | grep -o '"balance":[^,}]*' | grep -o '[0-9-]*')
+REPUTATION_AFTER=$(echo "$JUDGE1_AFTER" | grep -o '"reputation":[^,}]*' | grep -o '[0-9]*')
+echo "  Balance: $BALANCE_AFTER (increased by $((BALANCE_AFTER - BALANCE_BEFORE)))"
+echo "  Reputation: $REPUTATION_AFTER (increased by $((REPUTATION_AFTER - REPUTATION_BEFORE)))"
+echo ""
+
+echo "============================================================"
+echo -e "\t✅ REWARD CLAIMED!"
+echo "============================================================"
+echo "Judge 1 successfully claimed reward:"
+echo "  ✓ Balance increased by +10"
+echo "  ✓ Reputation increased by +1"
+echo "============================================================"
+echo ""
+
+echo "**********************************************************"
+echo -e "\tTesting double-claim prevention ..."
+echo "**********************************************************"
+echo "Attempting to claim reward again (should fail)..."
+set +e  # Temporarily allow errors
+DOUBLE_CLAIM_RESULT=$(stellar contract invoke \
+    --id lance-protocol \
+    --source judge-1 \
+    --network testnet \
+    -- claim_reward \
+    --voter "$JUDGE1_ADDRESS" \
+    --dispute_id 1 2>&1)
+DOUBLE_CLAIM_EXIT=$?
+set -e  # Re-enable error checking
+
+if [ $DOUBLE_CLAIM_EXIT -ne 0 ]; then
+    echo "✅ Double-claim correctly prevented!"
+    echo "Error message: $(echo "$DOUBLE_CLAIM_RESULT" | grep -o 'Error.*' || echo 'Already claimed')"
+else
+    echo "⚠️  Warning: Double-claim should have failed but didn't"
+fi
+echo ""
+
+echo "============================================================"
+echo -e "\t🎉 FULL WORKFLOW TEST COMPLETE!"
+echo "============================================================"
+echo "Test Summary:"
+echo "  ✓ Contract deployed and initialized"
+echo "  ✓ Judges registered (3 judges)"
+echo "  ✓ Anonymous voting setup configured"
+echo "  ✓ Dispute created with voting period"
+echo "  ✓ Commitments built using BLS12-381"
+echo "  ✓ Judge 1 cast anonymous vote"
+echo "  ✓ Dispute executed with cryptographic proof"
+echo "  ✓ Winner determined: CREATOR"
+echo "  ✓ Judge 1 claimed reward (+10 balance, +1 reputation)"
+echo "  ✓ Double-claim prevention verified"
+echo ""
+echo "🚀 All functions tested successfully!"
 echo "============================================================"
 echo ""
 

@@ -2,13 +2,12 @@ use crate::{
     events,
     methods::{
         balance::{get_balance, set_balance},
-        dispute,
     },
     storage::{
         dispute::{Dispute, get_dispute, set_dispute},
         dispute_status::DisputeStatus,
         error::Error,
-        vote::{AnonymousVote, Vote, Vote2, get_anonymous_voting_config},
+        vote::{Vote, VoteAnon, get_anonymous_voting_config},
         voter::get_voter,
     },
 };
@@ -282,9 +281,9 @@ pub fn vote(
     env: Env,
     voter: Address,
     /* , project_key: Bytes,*/ dispute_id: u32,
-    vote: Vote2,
+    vote: VoteAnon,
 ) {
-    ///Tansu::require_not_paused(env.clone());
+    //Tansu::require_not_paused(env.clone());
     voter.require_auth();
 
     //let page = proposal_id / MAX_PROPOSALS_PER_PAGE;
@@ -313,7 +312,7 @@ pub fn vote(
 
     // only allow to vote once per voter
     let has_already_voted = dispute.vote_data.votes.iter().any(|vote_| match vote_ {
-        Vote2::AnonymousVote(vote_choice) => vote_choice.address == voter,
+        VoteAnon::AnonymousVote(vote_choice) => vote_choice.address == voter,
     });
 
     if has_already_voted {
@@ -328,26 +327,23 @@ pub fn vote(
     // }
 
     // For anonymous votes, validate commitment structure
-    if let Vote2::AnonymousVote(vote_choice) = &vote {
-        if vote_choice.commitments.len() != 3 {
-            panic_with_error!(&env, &Error::BadCommitment)
-        }
-        for commitment in &vote_choice.commitments {
-            G1Affine::from_bytes(commitment);
-        }
+    let VoteAnon::AnonymousVote(vote_choice) = &vote;
+    if vote_choice.commitments.len() != 3 {
+        panic_with_error!(&env, &Error::BadCommitment)
+    }
+    for commitment in &vote_choice.commitments {
+        G1Affine::from_bytes(commitment);
     }
 
     // can only vote for yourself so address must match
-    let vote_address = match &vote {
-        Vote2::AnonymousVote(vote_choice) => &vote_choice.address,
-    };
-    if vote_address != &voter {
+    let VoteAnon::AnonymousVote(vote_choice) = &vote;
+    if vote_choice.address != voter {
         panic_with_error!(&env, &Error::WrongVoter);
     }
 
     // Voter can use up to their max allowed voting weight
     let vote_weight = match &vote {
-        Vote2::AnonymousVote(vote_choice) => &vote_choice.weight,
+        VoteAnon::AnonymousVote(vote_choice) => &vote_choice.weight,
     };
 
     // TODO: Restore max weight

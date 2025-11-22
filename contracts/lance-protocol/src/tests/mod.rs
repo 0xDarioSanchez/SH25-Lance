@@ -5,3 +5,4 @@ pub mod test_voting;
 pub mod test_voter;
 pub mod test_balance;
 pub mod test_integration;
+pub mod test_rewards;
