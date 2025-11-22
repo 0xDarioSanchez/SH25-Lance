@@ -40,15 +40,15 @@ if [ "$SKIP_BUILD" = "false" ]; then
     echo "============================================================"
     cd contracts/lance-protocol
     cargo build --target wasm32v1-none --release
-    stellar contract optimize --wasm target/wasm32v1-none/release/lance_protocol.wasm
     cd ../..
+    stellar contract optimize --wasm target/wasm32v1-none/release/lance_protocol.wasm
     
     echo ""
     echo "Deploying Lance-Protocol..."
     stellar contract alias remove lance-protocol 2>/dev/null || true
     
     stellar contract deploy \
-      --wasm contracts/lance-protocol/target/wasm32v1-none/release/lance_protocol.optimized.wasm \
+      --wasm target/wasm32v1-none/release/lance_protocol.optimized.wasm \
       --source-account lance-admin \
       --network testnet \
       --alias lance-protocol \
@@ -76,8 +76,9 @@ if [ "$SKIP_BUILD" = "false" ]; then
     echo "  STEP 2: Building Governor-DAO Contract"
     echo "============================================================"
     cd contracts/governor-dao
-    cargo build --target wasm32-unknown-unknown --release
+    cargo build --release --target wasm32-unknown-unknown
     cd ../..
+    stellar contract build target/wasm32-unknown-unknown/release/soroban_governor.wasm --optimize
     
     echo ""
     echo "Deploying Governor-DAO Contract..."
@@ -93,7 +94,7 @@ if [ "$SKIP_BUILD" = "false" ]; then
     echo ""
     
     stellar contract deploy \
-      --wasm target/wasm32-unknown-unknown/release/soroban_governor.wasm \
+      --wasm target/wasm32-unknown-unknown/release/soroban_governor.optimized.wasm \
       --source-account lance-admin \
       --network testnet \
       --alias governor-dao \
@@ -394,7 +395,7 @@ DISPUTE_ID=$(stellar contract invoke \
     --id governor-dao \
     --source judge-1 \
     --network testnet \
-    -- create_dispute_for_proposal \
+    -- create_dispute_demo \
     --creator "$VOTER1_ADDRESS" \
     --proposal_id "$PROPOSAL_ID" \
     --proof "$DISPUTE_PROOF" 2>&1 | grep -v "⚠️" | grep -v "ℹ️" | grep -oP '\d+' | head -1)

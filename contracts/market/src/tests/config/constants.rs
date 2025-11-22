@@ -1,1 +1,0 @@
-pub const BASE_MINT_AMOUNT: i128 = 10_000;
