@@ -286,7 +286,7 @@ DISPUTE_ID=$(stellar contract invoke \
     --id market \
     --source employee \
     --network testnet \
-    -- create_dispute \
+    -- create_dispute_demo \
     --creator "$EMPLOYEE_ADDRESS" \
     --id "$SERVICE_ID" \
     --proof "$DISPUTE_PROOF" 2>&1 | grep -v "⚠️" | grep -v "ℹ️" | grep -oP '\d+' | head -1)

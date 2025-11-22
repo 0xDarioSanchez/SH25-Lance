@@ -196,7 +196,7 @@ stellar contract invoke \
     --id lance-protocol \
     --source lance-admin \
     --network testnet \
-    -- create_dispute \
+    -- create_dispute_demo \
     --project_id 1 \
     --creator lance-admin \
     --counterpart lance-admin \

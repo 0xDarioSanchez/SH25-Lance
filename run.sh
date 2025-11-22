@@ -308,7 +308,6 @@ stellar contract invoke \
     --network testnet \
     -- execute \
     --maintainer "$ADMIN_ADDRESS" \
-    --project_id 1 \
     --dispute_id 1 \
     --tallies '["9", "3", "3"]' \
     --seeds '["15", "12", "18"]'

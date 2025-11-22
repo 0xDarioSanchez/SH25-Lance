@@ -132,6 +132,7 @@ pub trait Governor {
     /// * `creator` - The address of the account creating the dispute
     /// * `proposal_id` - The id of the proposal to dispute
     /// * `proof` - The proof/evidence for the dispute
+    /// * `amount` - The amount of the service
     ///
     /// ### Panics
     /// * If the proposal_id is invalid
@@ -141,5 +142,6 @@ pub trait Governor {
         creator: Address,
         proposal_id: u32,
         proof: String,
+        amount: i128,
     ) -> u32;
 }

@@ -1,7 +1,4 @@
-use crate::{
-    errors::GovernorError,
-    storage,
-};
+use crate::{errors::GovernorError, storage};
 use soroban_sdk::{panic_with_error, Address, Env, String};
 
 const TIME_ONE_DAY: u64 = 24 * 60 * 60;
@@ -20,6 +17,7 @@ pub fn create_dispute_for_proposal(
     creator: Address,
     proposal_id: u32,
     proof: String,
+    amount: i128,
 ) -> u32 {
     creator.require_auth();
     storage::extend_instance(env);
@@ -50,6 +48,7 @@ pub fn create_dispute_for_proposal(
         &proof,                          // proof/evidence
         &voting_ends_at,                 // voting_ends_at
         &env.current_contract_address(), // called_contract (this governor contract)
+        &amount,                         // amount of the service
     );
 
     // Return the dispute_id from lance-protocol

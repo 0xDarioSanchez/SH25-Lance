@@ -38,9 +38,10 @@ impl Governor for GovernorContract {
         if admin != council {
             panic_with_error!(&e, GovernorError::UnauthorizedError);
         }
-        e.storage()
-            .instance()
-            .set(&String::from_str(&e, "LanceProtocolContract"), &lance_protocol);
+        e.storage().instance().set(
+            &String::from_str(&e, "LanceProtocolContract"),
+            &lance_protocol,
+        );
         storage::extend_instance(&e);
     }
 
@@ -178,7 +179,7 @@ impl Governor for GovernorContract {
             // } else {
             //     proposal_data.status = ProposalStatus::Defeated;
             // }
-            
+
             // Simplified: Mark as successful for now, use lance-protocol for actual resolution
             proposal_data.status = ProposalStatus::Successful;
             if proposal_data.executable {
@@ -311,7 +312,8 @@ impl Governor for GovernorContract {
         creator: Address,
         proposal_id: u32,
         proof: String,
+        amount: i128,
     ) -> u32 {
-        crate::dispute::create_dispute_for_proposal(&e, creator, proposal_id, proof)
+        crate::dispute::create_dispute_for_proposal(&e, creator, proposal_id, proof, amount)
     }
 }

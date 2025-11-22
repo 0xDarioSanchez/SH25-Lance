@@ -1,12 +1,5 @@
-use crate::{
-    storage::{
-        error::Error,
-        service::*,
-        service_status::ServiceStatus,
-        storage::DataKey,
-    },
-};
 use crate::events::event::created_dispute;
+use crate::storage::{error::Error, service::*, service_status::ServiceStatus, storage::DataKey};
 use soroban_sdk::{Address, Env, String};
 
 const TIME_ONE_DAY: u64 = 24 * 60 * 60;
@@ -53,12 +46,13 @@ pub fn create_dispute(
     // Call lance-protocol contract to create the dispute
     let lance_client = lance_protocol::Client::new(env, &lance_protocol_contract);
     let dispute = lance_client.create_dispute(
-        &service_id,                  // project_id (using service_id as project_id)
-        &employer,                    // creator
-        &employee,                    // counterpart
-        &proof,                       // proof
-        &voting_ends_at,              // voting_ends_at
+        &service_id,                     // project_id (using service_id as project_id)
+        &employer,                       // creator
+        &employee,                       // counterpart
+        &proof,                          // proof
+        &voting_ends_at,                 // voting_ends_at
         &env.current_contract_address(), // called_contract (this market contract)
+        &service.milestone_payment,      // amount of the service
     );
 
     // Update service status to DISPUTING
@@ -72,7 +66,12 @@ pub fn create_dispute(
     Ok(dispute.dispute_id)
 }
 
-pub fn update_dispute(env: &Env, service_id: u32, dispute_id: u32, proof: String) -> Result<(), Error> {
+pub fn update_dispute(
+    env: &Env,
+    service_id: u32,
+    dispute_id: u32,
+    proof: String,
+) -> Result<(), Error> {
     let service = get_service(env, service_id)?;
     let employee = service.employee.clone();
 
@@ -103,4 +102,3 @@ pub fn update_dispute(env: &Env, service_id: u32, dispute_id: u32, proof: String
 
     Ok(())
 }
-
