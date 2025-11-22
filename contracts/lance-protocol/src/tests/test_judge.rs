@@ -16,10 +16,10 @@ use crate::{
 fn test_vote_maths() {
     let setup = create_test_data();
 
-    // let public_key = String::from_str(&setup.env, "public key random");
-    // setup
-    //     .contract
-    //     .anonymous_voting_setup(&setup.judge1, &setup.project_id, &public_key);
+    let public_key = String::from_str(&setup.env, "public key random");
+    setup
+        .contract
+        .anonymous_voting_setup(&setup.contract_admin, &setup.project_id, &public_key);
 
     let voting_ends_at = setup.env.ledger().timestamp() + 3600 * 24 * 2;
     let dispute = init_contract(&setup);

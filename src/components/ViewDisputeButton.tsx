@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button, Modal, Text } from "@stellar/design-system";
 import { getDispute } from "../api/disputes";
 import type { Dispute } from "../api/types";
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export const ViewDisputeButton = ({ id, disabled, variant = "primary" }: Props) => {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [dispute, setDispute] = useState<Dispute | null>(null);
@@ -44,9 +46,9 @@ export const ViewDisputeButton = ({ id, disabled, variant = "primary" }: Props) 
         size="sm"
         variant={variant}
         disabled={disabled}
-        onClick={() => setOpen(true)}
+        onClick={() => navigate(`/dispute/${id}`)}
       >
-        View
+        View & Vote
       </Button>
 
       <Modal

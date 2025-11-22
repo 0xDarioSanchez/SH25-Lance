@@ -56,17 +56,17 @@ pub struct VoteData {
 ///
 /// # Arguments
 /// * `env` - The environment object
-/// * `project_key` - The project key identifier
+/// * `project_id` - The project ID identifier
 ///
 /// # Returns
 /// * `types::AnonymousVoteConfig` - The anonymous voting configuration
 ///
 /// # Panics
 /// * If no anonymous voting configuration exists for the project
-pub fn get_anonymous_voting_config(env: &Env, dispute_id: u32) -> AnonymousVoteConfig {
+pub fn get_anonymous_voting_config(env: &Env, project_id: u32) -> AnonymousVoteConfig {
     env.storage()
         .instance()
-        .get(&DataKey::AnonymousVoteConfig(dispute_id))
+        .get(&DataKey::AnonymousVoteConfig(project_id))
         .unwrap_or_else(|| {
             panic_with_error!(env, &error::Error::NoAnonymousVotingConfig);
         })

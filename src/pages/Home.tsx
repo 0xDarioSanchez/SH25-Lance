@@ -1,13 +1,22 @@
 import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Code, Layout, Text } from "@stellar/design-system";
 import { CreateDisputeButton } from "../components/CreateDisputeButton";
+import { RegisterJudgeButton } from "../components/RegisterJudgeButton";
+import { AnonymousVotingSetup } from "../components/AnonymousVotingSetup";
 import { DisputeList } from "../components/DisputeList";
 import { getDisputes } from "../api/disputes";
 import type { Dispute } from "../api/types";
+import { useWallet } from "../hooks/useWallet";
+import { MAINTAINER_ADDRESS } from "../contracts/util";
 
 const Home: React.FC = () => {
+  const location = useLocation();
+  const { address } = useWallet();
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const isMaintainer = address === MAINTAINER_ADDRESS;
 
   const loadDisputes = async () => {
     try {
@@ -22,7 +31,18 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     loadDisputes();
-  }, []);
+    
+    // Reload disputes when window regains focus (user comes back to tab)
+    const handleFocus = () => {
+      loadDisputes();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [location]); // Reload when location changes (navigating back to home)
 
   return (
     <Layout.Content>
@@ -63,11 +83,34 @@ const Home: React.FC = () => {
         {/* PASAMOS loadDisputes A CreateDisputeButton */}
         <CreateDisputeButton onCreated={loadDisputes} />
 
+        {/* Register as Judge Button */}
+        <RegisterJudgeButton />
+
+        {/* Anonymous Voting Setup - Only shown to maintainer */}
+        {isMaintainer ? (
+          <AnonymousVotingSetup projectId={1} />
+        ) : address && (
+          <div style={{ 
+            padding: "16px", 
+            backgroundColor: "#fff3cd", 
+            borderRadius: "8px", 
+            marginTop: "16px",
+            marginBottom: "16px",
+            border: "1px solid #ffc107"
+          }}>
+            <Text as="p" size="sm" style={{ color: "#856404" }}>
+              ℹ️ <strong>Note:</strong> Anonymous voting setup and dispute execution is restricted to the maintainer.
+            </Text>
+            <Text as="p" size="xs" style={{ color: "#856404", marginTop: "8px" }}>
+              Maintainer: {MAINTAINER_ADDRESS.slice(0, 12)}...{MAINTAINER_ADDRESS.slice(-8)}
+            </Text>
+          </div>
+        )}
+
         {/* LA LISTA LEE DESDE EL ESTADO DEL PADRE */}
         <DisputeList
           disputes={disputes}
           loading={loading}
-          onDelete={loadDisputes}
         />
       </Layout.Inset>
     </Layout.Content>

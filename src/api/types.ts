@@ -8,4 +8,9 @@ export interface Dispute {
   proof: string;
   votingEndsAt: string;
   state: string;
+  winner?: string | null;
+  votesFor?: number;
+  votesAgainst?: number;
+  votesAbstain?: number;
+  blockchainDisputeId?: number; // The actual dispute_id from the smart contract
 }

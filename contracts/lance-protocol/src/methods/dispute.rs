@@ -1,6 +1,5 @@
 use crate::events::event;
 use crate::methods::vote::build_commitments_from_votes;
-use crate::methods::{admin, dispute};
 use crate::storage::dispute::get_dispute;
 use crate::storage::vote::get_anonymous_voting_config;
 use crate::storage::{
@@ -16,15 +15,14 @@ use soroban_sdk::{Address, BytesN, Env, String, U256, Vec, panic_with_error, vec
 pub fn create_dispute(
     env: &Env,
     project_id: u32,
-    public_key: String,
     creator: Address,
     counterpart: Address,
     proof: String,
     voting_ends_at: u64,
     called_contract: Address,
 ) -> Result<Dispute, Error> {
-    admin::require_admin(env);
-    //    creator.require_auth();
+    // Require authentication from the dispute creator
+    creator.require_auth();
 
     let current_id = env
         .storage()
@@ -36,7 +34,10 @@ pub fn create_dispute(
         .instance()
         .set(&DataKey::DisputeId, &new_dispute_id);
 
-    admin::anonymous_voting_setup(env.clone(), creator.clone(), project_id, public_key.clone());
+    // Note: anonymous_voting_setup should be called separately by the maintainer
+    // before creating disputes. It sets up the public key for the entire project.
+    // Calling it here would overwrite any existing configuration.
+    // admin::anonymous_voting_setup(env.clone(), creator.clone(), project_id, public_key.clone());
 
     // proposer is automatically in the abstain group
     // use the first level to not block a vote from proposer with
@@ -103,14 +104,14 @@ pub fn create_dispute(
     };
 
     set_dispute(env, new_dispute_id, dispute.clone());
-    // Emit event for anonymous dispute setup
-    event::AnonymousDisputeSetup {
-        project_id,
-        creator,
-        public_key,
-    }
-    .publish(&env);
-    //TODO add event
+    
+    // Emit event for dispute creation
+    // Note: public_key is stored separately via anonymous_voting_setup
+    // event::AnonymousDisputeSetup {
+    //     project_id,
+    //     creator,
+    // }
+    // .publish(&env);
 
     Ok(dispute)
 }
@@ -307,7 +308,7 @@ pub fn execute(
 ///
 /// # Panics
 /// * If no anonymous voting configuration exists for the project
-fn proof(
+pub fn proof(
     env: Env,
     //project_key: Bytes,
     dispute: Dispute,
@@ -326,7 +327,7 @@ fn proof(
 
     let bls12_381 = env.crypto().bls12_381();
 
-    let vote_config = get_anonymous_voting_config(&env, dispute.dispute_id);
+    let vote_config = get_anonymous_voting_config(&env, dispute.project_id);
     // let vote_config: types::AnonymousVoteConfig = env
     //     .storage()
     //     .instance()

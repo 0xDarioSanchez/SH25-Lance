@@ -11,7 +11,6 @@ fn test_create_dispute_success() {
 
     let dispute = setup.contract.create_dispute(
         &setup.project_id,
-        &setup.public_key,
         &setup.creator,
         &setup.counterpart,
         &proof,
@@ -40,7 +39,6 @@ fn test_create_multiple_disputes() {
 
     let dispute1 = setup.contract.create_dispute(
         &setup.project_id,
-        &setup.public_key,
         &setup.creator,
         &setup.counterpart,
         &proof1,
@@ -53,7 +51,6 @@ fn test_create_multiple_disputes() {
 
     let dispute2 = setup.contract.create_dispute(
         &setup.project_id,
-        &setup.public_key,
         &new_creator,
         &new_counterpart,
         &proof2,
@@ -90,7 +87,6 @@ fn test_dispute_timestamps() {
 
     let dispute = setup.contract.create_dispute(
         &setup.project_id,
-        &setup.public_key,
         &setup.creator,
         &setup.counterpart,
         &proof,

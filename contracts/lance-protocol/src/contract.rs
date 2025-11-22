@@ -1,10 +1,10 @@
 use crate::events::event;
-use crate::methods::dispute::execute;
+use crate::methods::dispute::{execute, proof};
 use crate::storage::dispute::get_dispute;
 use crate::storage::dispute_status::DisputeStatus;
 use crate::storage::error;
 use crate::storage::project::Project;
-use crate::storage::vote::Vote2;
+use crate::storage::vote::{Vote2, AnonymousVoteConfig, get_anonymous_voting_config as get_anon_config};
 use crate::storage::voter::{get_voter, set_voter};
 use crate::storage::{DataKey, Dispute, Voter, error::Error};
 use crate::{
@@ -37,6 +37,8 @@ pub trait ProtocolContractTrait {
 
     fn anonymous_voting_setup(env: Env, maintainer: Address, project_id: u32, public_key: String);
 
+    fn get_anonymous_voting_config(env: Env, project_id: u32) -> AnonymousVoteConfig;
+
     fn build_commitments_from_votes(
         env: Env,
         project_id: u32,
@@ -47,7 +49,6 @@ pub trait ProtocolContractTrait {
     fn create_dispute(
         env: &Env,
         project_id: u32,
-        public_key: String,
         creator: Address,
         counterpart: Address,
         proof: String,
@@ -86,6 +87,13 @@ pub trait ProtocolContractTrait {
         tallies: Option<Vec<u128>>,
         seeds: Option<Vec<u128>>,
     ) -> DisputeStatus;
+
+    fn proof(
+        env: Env,
+        dispute_id: u32,
+        tallies: Vec<u128>,
+        seeds: Vec<u128>,
+    ) -> bool;
 }
 
 #[contract]
@@ -97,20 +105,12 @@ impl ProtocolContractTrait for ProtocolContract {
         initialize(&env, admin, token)
     }
 
-    /// Setup anonymous voting for a project.
-    ///
-    /// Configures BLS12-381 cryptographic primitives for anonymous voting.
-    /// Only the contract admin can call this function.
-    ///
-    /// # Arguments
-    /// * `env` - The environment object
-    /// * `project_key` - Unique identifier for the project
-    /// * `public_key` - Asymmetric public key to be used for vote encryption
-    ///
-    /// # Panics
-    /// * If the caller is not the contract admin
     fn anonymous_voting_setup(env: Env, judge: Address, project_id: u32, public_key: String) {
         anonymous_voting_setup(env, judge, project_id, public_key)
+    }
+
+    fn get_anonymous_voting_config(env: Env, project_id: u32) -> AnonymousVoteConfig {
+        get_anon_config(&env, project_id)
     }
 
     fn build_commitments_from_votes(
@@ -146,7 +146,6 @@ impl ProtocolContractTrait for ProtocolContract {
     fn create_dispute(
         env: &Env,
         project_id: u32,
-        public_key: String,
         creator: Address,
         counterpart: Address,
         proof: String,
@@ -156,7 +155,6 @@ impl ProtocolContractTrait for ProtocolContract {
         create_dispute(
             env,
             project_id,
-            public_key,
             creator,
             counterpart,
             proof,
@@ -205,5 +203,15 @@ impl ProtocolContractTrait for ProtocolContract {
         seeds: Option<Vec<u128>>,
     ) -> DisputeStatus {
         execute(env, maintainer, project_id, dispute_id, tallies, seeds)
+    }
+
+    fn proof(
+        env: Env,
+        dispute_id: u32,
+        tallies: Vec<u128>,
+        seeds: Vec<u128>,
+    ) -> bool {
+        let dispute = get_dispute(&env, dispute_id).unwrap();
+        proof(env, dispute, tallies, seeds)
     }
 }

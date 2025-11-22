@@ -148,7 +148,6 @@ pub fn init_contract(setup: &TestSetup) -> Dispute {
 
     let dispute = setup.contract.create_dispute(
         &setup.project_id,
-        &setup.public_key,
         &setup.creator,
         &setup.counterpart,
         &setup.proof,
@@ -156,35 +155,8 @@ pub fn init_contract(setup: &TestSetup) -> Dispute {
         &setup.contract_id,
     );
 
-    let all_events = setup.env.events().all();
-    assert_eq!(
-        all_events,
-        vec![
-            &setup.env,
-            (
-                setup.contract_id.clone(),
-                (
-                    Symbol::new(&setup.env, "anonymous_dispute_setup"),
-                    setup.project_id.clone()
-                )
-                    .into_val(&setup.env),
-                Map::<Symbol, Val>::from_array(
-                    &setup.env,
-                    [
-                        (
-                            Symbol::new(&setup.env, "creator"),
-                            setup.creator.clone().into_val(&setup.env)
-                        ),
-                        (
-                            Symbol::new(&setup.env, "public_key"),
-                            setup.public_key.into_val(&setup.env)
-                        ),
-                    ],
-                )
-                .into_val(&setup.env),
-            ),
-        ]
-    );
+    // Note: anonymous_voting_setup event is no longer emitted automatically
+    // The maintainer must call anonymous_voting_setup separately before creating disputes
 
     assert_eq!(dispute.vote_data.votes, vec![&setup.env]);
 

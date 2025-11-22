@@ -2,6 +2,11 @@
 set -e
 
 # Lance Protocol - Anonymous Voting Demo Script
+#
+# USAGE:
+#   ./run.sh              - Reuse existing contract (state persists)
+#   FRESH_DEPLOY=true ./run.sh  - Deploy fresh contract (clean state)
+#
 # This script demonstrates the anonymous voting workflow of the Lance Protocol:
 # 1. Build and deploy the contract
 # 2. Register judges (voters)
@@ -23,14 +28,89 @@ cargo build --target wasm32v1-none --release && stellar contract optimize --wasm
 echo "**********************************"
 echo -e "\t****Deploying & Initializing**** ..."
 echo "**********************************"
-stellar contract deploy \
-  --wasm target/wasm32v1-none/release/lance_protocol.optimized.wasm \
-  --source-account lance-admin \
-  --network testnet \
-  --alias lance-protocol \
-  -- \
-  --admin lance-admin \
-  --token CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC
+
+# Check if we should deploy fresh or reuse existing contract
+if [ "$FRESH_DEPLOY" = "true" ]; then
+    echo "🗑️  Removing old contract alias for fresh deployment..."
+    stellar contract alias remove lance-protocol 2>/dev/null || true
+    
+    echo "📦 Deploying fresh contract with new state..."
+    
+    # Deploy and initialize in one step, capture contract ID
+    stellar contract deploy \
+      --wasm target/wasm32v1-none/release/lance_protocol.optimized.wasm \
+      --source-account lance-admin \
+      --network testnet \
+      --alias lance-protocol \
+      -- \
+      --admin lance-admin \
+      --token CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC
+    
+    CONTRACT_ID=$(stellar contract alias show lance-protocol)
+    echo "✅ Deployed new contract: $CONTRACT_ID"
+else
+    echo "♻️  Reusing existing contract (state persists)..."
+    
+    # Check if alias exists
+    if stellar contract alias show lance-protocol 2>/dev/null; then
+        CONTRACT_ID=$(stellar contract alias show lance-protocol)
+        echo "✅ Using existing contract: $CONTRACT_ID"
+    else
+        echo "⚠️  No existing contract found. Deploying new one..."
+        
+        # Deploy and initialize in one step
+        stellar contract deploy \
+          --wasm target/wasm32v1-none/release/lance_protocol.optimized.wasm \
+          --source-account lance-admin \
+          --network testnet \
+          --alias lance-protocol \
+          -- \
+          --admin lance-admin \
+          --token CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC
+        
+        CONTRACT_ID=$(stellar contract alias show lance-protocol)
+        echo "✅ Deployed new contract: $CONTRACT_ID"
+    fi
+fi
+
+# Update .env file with new contract ID
+if [ -f ".env" ]; then
+    # Check if the line exists
+    if grep -q "PUBLIC_LANCE_PROTOCOL_CONTRACT_ID=" .env; then
+        # Update existing line (works on both macOS and Linux)
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s|PUBLIC_LANCE_PROTOCOL_CONTRACT_ID=.*|PUBLIC_LANCE_PROTOCOL_CONTRACT_ID=$CONTRACT_ID|" .env
+        else
+            sed -i "s|PUBLIC_LANCE_PROTOCOL_CONTRACT_ID=.*|PUBLIC_LANCE_PROTOCOL_CONTRACT_ID=$CONTRACT_ID|" .env
+        fi
+        echo "✅ Updated .env file with new contract ID"
+    else
+        # Append if doesn't exist
+        echo "" >> .env
+        echo "PUBLIC_LANCE_PROTOCOL_CONTRACT_ID=$CONTRACT_ID" >> .env
+        echo "✅ Added contract ID to .env file"
+    fi
+else
+    echo "⚠️  Warning: .env file not found. Contract ID: $CONTRACT_ID"
+fi
+
+echo "📝 Contract ID: $CONTRACT_ID"
+
+# Skip test flow if reusing existing contract
+if [ "$FRESH_DEPLOY" != "true" ]; then
+    echo ""
+    echo "✅ Contract ready! State persists across restarts."
+    echo "   Frontend will use: $CONTRACT_ID"
+    echo ""
+    echo "💡 Tip: Run 'FRESH_DEPLOY=true ./run.sh' to deploy with clean state"
+    exit 0
+fi
+
+echo ""
+echo "=========================================================="
+echo "  Running full test workflow on fresh contract..."
+echo "=========================================================="
+echo ""
 
 echo "***********************************************"
 echo -e "\tRegistration of Judge 1 ..."
@@ -96,9 +176,9 @@ echo "**************************************************"
 echo -e "\tCreating Dispute 1 with Anonymous Voting Setup ..."
 echo "**************************************************"
 # The create_dispute function now calls anonymous_voting_setup internally
-# Set voting_ends_at to 15 seconds from now for demo purposes
-VOTING_ENDS_AT=$(($(date +%s) + 15))
-echo "Voting ends at timestamp: $VOTING_ENDS_AT (15 seconds from now)"
+# Set voting_ends_at to 60 seconds from now to allow time for voting
+VOTING_ENDS_AT=$(($(date +%s) + 60))
+echo "Voting ends at timestamp: $VOTING_ENDS_AT (60 seconds from now)"
 
 stellar contract invoke \
     --id lance-protocol \
@@ -106,7 +186,6 @@ stellar contract invoke \
     --network testnet \
     -- create_dispute \
     --project_id 1 \
-    --public_key "BLS12_381_PUBLIC_KEY_PLACEHOLDER" \
     --creator lance-admin \
     --counterpart lance-admin \
     --proof "Test dispute for anonymous voting" \
@@ -201,9 +280,9 @@ echo "Skipping Judge 2 vote for demo - only using Judge 1's vote"
 echo "**********************************************************"
 echo -e "\tExecuting dispute with tallied votes and seeds ..."
 echo "**********************************************************"
-# Wait for voting period to end (15 seconds + buffer)
-echo "Waiting for voting period to end (17 seconds)..."
-sleep 17
+# Wait for voting period to end (60 seconds + buffer)
+echo "Waiting for voting period to end (62 seconds)..."
+sleep 62
 
 # After voting period ends, execute with tallied results
 # Tallies: [9, 3, 3] - weighted sum: Judge1(3*[3,1,1]) = [9,3,3]

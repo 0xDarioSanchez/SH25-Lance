@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Button, Input, Modal, Text, Textarea } from "@stellar/design-system";
 import { useWallet } from "../hooks/useWallet";
 import { StrKey } from "@stellar/stellar-sdk";
-import { createDispute } from "../api/disputes";
+import { callContract, LANCE_CONTRACT_ID, addressToScVal, u32ToScVal } from "../util/contractCall";
+import { nativeToScVal } from "@stellar/stellar-sdk";
 
 interface Props {
   onCreated?: () => void;
@@ -13,8 +14,9 @@ export const CreateDisputeButton = ({ onCreated }: Props) => {
   const [counterpart, setCounterpart] = useState("");
   const [proof, setProof] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const { address, isPending } = useWallet();
+  const { address, isPending, signTransaction } = useWallet();
   const isConnected = !!address;
 
   const isValidStellarAddress = (addr: string): boolean => {
@@ -24,28 +26,45 @@ export const CreateDisputeButton = ({ onCreated }: Props) => {
   const counterpartIsValid = isValidStellarAddress(counterpart);
 
   const handleSubmit = async () => {
-    if (!address || !counterpartIsValid) return;
+    if (!address || !counterpartIsValid || !signTransaction) return;
 
     setSubmitting(true);
-
-    const payload = {
-      creator: address,
-      counterpart: counterpart.trim(),
-      proof: proof.trim(),
-      state: "pending",
-      createdAt: new Date().toISOString(),
-    };
+    setError(null);
 
     try {
-      await createDispute(payload);
+      // Calculate voting end time (80 seconds from now)
+      const votingEndsAt = Math.floor(Date.now() / 1000) + 80;
+
+      // Call the smart contract's create_dispute function
+      // Note: public_key is now set separately via anonymous_voting_setup
+      const result = await callContract({
+        contractId: LANCE_CONTRACT_ID,
+        method: "create_dispute",
+        args: [
+          u32ToScVal(1), // project_id
+          addressToScVal(address), // creator
+          addressToScVal(counterpart.trim()), // counterpart
+          nativeToScVal(proof.trim(), { type: "string" }), // proof
+          nativeToScVal(votingEndsAt, { type: "u64" }), // voting_ends_at
+          addressToScVal(LANCE_CONTRACT_ID), // called_contract
+        ],
+        publicKey: address,
+        signTransaction,
+      });
+
+      // Extract the blockchain dispute_id from the result
+      const blockchainDisputeId = result?.dispute_id || 1;
+      console.log("✓ Created dispute on blockchain with ID:", blockchainDisputeId);
 
       if (onCreated) onCreated();
 
       setShowModal(false);
       setCounterpart("");
       setProof("");
+      setError(null);
     } catch (error) {
       console.error("Error creating dispute:", error);
+      setError(error instanceof Error ? error.message : "Failed to create dispute");
     } finally {
       setSubmitting(false);
     }
@@ -63,6 +82,12 @@ export const CreateDisputeButton = ({ onCreated }: Props) => {
         <Text as="p" size="md" style={{ marginBottom: "10px" }}>
           Fill the parameters required by the smart contract to open a dispute.
         </Text>
+
+        {error && (
+          <Text as="p" size="sm" style={{ color: "red", marginBottom: "10px" }}>
+            Error: {error}
+          </Text>
+        )}
 
         <Text as="span" size="sm" style={{ fontWeight: 600 }}>
           Creator (your wallet)

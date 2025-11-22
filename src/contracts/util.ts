@@ -76,3 +76,7 @@ export const network: Network = {
   rpcUrl: rpcUrl,
   horizonUrl: horizonUrl,
 };
+
+// Maintainer address - only this address can execute disputes and decrypt votes
+// This is the authorized admin who can finalize dispute results
+export const MAINTAINER_ADDRESS = "GAFD2HZTG2DTI2IVLPENY4XBCHFJHZMVCNWGRWJXLGGYD77HXZM7RYFG";

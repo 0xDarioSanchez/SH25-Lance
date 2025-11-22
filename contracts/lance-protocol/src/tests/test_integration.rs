@@ -12,11 +12,10 @@ fn test_full_dispute_lifecycle() {
     setup.contract.new_voter(&setup.judge2);
     setup.contract.new_voter(&setup.judge3);
 
-    // Step 2: Create dispute
+    // Step 2: Create dispute (no longer requires public_key parameter)
     let proof = String::from_str(&setup.env, "Evidence IPFS hash");
     let dispute = setup.contract.create_dispute(
         &setup.project_id,
-        &setup.public_key,
         &setup.creator,
         &setup.counterpart,
         &proof,
@@ -81,7 +80,6 @@ fn test_multiple_disputes_independent() {
     let proof1 = String::from_str(&setup.env, "Proof 1");
     let dispute1 = setup.contract.create_dispute(
         &setup.project_id,
-        &setup.public_key,
         &setup.creator,
         &setup.counterpart,
         &proof1,
@@ -96,7 +94,6 @@ fn test_multiple_disputes_independent() {
 
     let dispute2 = setup.contract.create_dispute(
         &setup.project_id,
-        &setup.public_key,
         &creator2,
         &counterpart2,
         &proof2,
@@ -145,7 +142,6 @@ fn test_unanimous_vote_for_creator() {
     let proof = String::from_str(&setup.env, "Strong evidence");
     let dispute = setup.contract.create_dispute(
         &setup.project_id,
-        &setup.public_key,
         &setup.creator,
         &setup.counterpart,
         &proof,
@@ -209,7 +205,6 @@ fn test_unanimous_vote_for_counterpart() {
     let proof = String::from_str(&setup.env, "Weak evidence");
     let dispute = setup.contract.create_dispute(
         &setup.project_id,
-        &setup.public_key,
         &setup.creator,
         &setup.counterpart,
         &proof,
@@ -271,7 +266,6 @@ fn test_single_judge_decides() {
     let proof = String::from_str(&setup.env, "Evidence");
     let dispute = setup.contract.create_dispute(
         &setup.project_id,
-        &setup.public_key,
         &setup.creator,
         &setup.counterpart,
         &proof,
@@ -309,7 +303,6 @@ fn test_large_number_of_judges() {
     let proof = String::from_str(&setup.env, "Evidence");
     let dispute = setup.contract.create_dispute(
         &setup.project_id,
-        &setup.public_key,
         &setup.creator,
         &setup.counterpart,
         &proof,
