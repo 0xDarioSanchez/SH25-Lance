@@ -13,6 +13,7 @@ const envSchema = z.object({
   PUBLIC_STELLAR_NETWORK_PASSPHRASE: z.nativeEnum(WalletNetwork),
   PUBLIC_STELLAR_RPC_URL: z.string(),
   PUBLIC_STELLAR_HORIZON_URL: z.string(),
+  PUBLIC_MAINTAINER_ADDRESS: z.string(),
 });
 
 const parsed = envSchema.safeParse(import.meta.env);
@@ -20,11 +21,12 @@ const parsed = envSchema.safeParse(import.meta.env);
 const env: z.infer<typeof envSchema> = parsed.success
   ? parsed.data
   : {
-      PUBLIC_STELLAR_NETWORK: "LOCAL",
-      PUBLIC_STELLAR_NETWORK_PASSPHRASE: WalletNetwork.STANDALONE,
-      PUBLIC_STELLAR_RPC_URL: "http://localhost:8000/rpc",
-      PUBLIC_STELLAR_HORIZON_URL: "http://localhost:8000",
-    };
+    PUBLIC_STELLAR_NETWORK: "LOCAL",
+    PUBLIC_STELLAR_NETWORK_PASSPHRASE: WalletNetwork.STANDALONE,
+    PUBLIC_STELLAR_RPC_URL: "http://localhost:8000/rpc",
+    PUBLIC_STELLAR_HORIZON_URL: "http://localhost:8000",
+    PUBLIC_MAINTAINER_ADDRESS: "GAQXT6HLQN2HZZZV3X4LIF6MU5JAN5GMIWQIXZXFIDXOL6SK36FDQBBH",
+  };
 
 export const stellarNetwork =
   env.PUBLIC_STELLAR_NETWORK === "STANDALONE"
@@ -79,4 +81,4 @@ export const network: Network = {
 
 // Maintainer address - only this address can execute disputes and decrypt votes
 // This is the authorized admin who can finalize dispute results
-export const MAINTAINER_ADDRESS = "GAFD2HZTG2DTI2IVLPENY4XBCHFJHZMVCNWGRWJXLGGYD77HXZM7RYFG";
+export const MAINTAINER_ADDRESS = env.PUBLIC_MAINTAINER_ADDRESS;
