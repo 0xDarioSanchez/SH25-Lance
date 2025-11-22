@@ -1,6 +1,7 @@
 use soroban_sdk::{Address, Bytes, Env, String, panic_with_error};
 
 use crate::{
+    events::event,
     storage::{
         self, DataKey,
         error::{self, Error},
@@ -45,7 +46,7 @@ pub(crate) fn auth_maintainers(
     project_id: u32,
 ) -> storage::Dispute {
     maintainer.require_auth();
-    //let project_key_ = types::ProjectKey::Key(project_key.clone());
+
     if let Some(dispute) = env
         .storage()
         .instance()
@@ -79,8 +80,6 @@ pub(crate) fn anonymous_voting_setup(
     project_id: u32,
     public_key: String,
 ) {
-    //auth_maintainers(&env, &judge, project_id);
-
     // generators
     let bls12_381 = env.crypto().bls12_381();
 
@@ -103,10 +102,10 @@ pub(crate) fn anonymous_voting_setup(
         .set(&DataKey::AnonymousVoteConfig(project_id), &vote_config);
 
     // // Emit event for anonymous voting setup
-    // event::AnonymousVotingSetup {
-    //     project_id,
-    //     judge,
-    //     public_key,
-    // }
-    // .publish(&env);
+    event::AnonymousVotingSetup {
+        project_id,
+        judge,
+        public_key,
+    }
+    .publish(&env);
 }

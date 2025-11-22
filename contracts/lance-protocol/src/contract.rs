@@ -1,26 +1,19 @@
-use crate::events::event;
-use crate::methods::dispute::{execute, proof, claim_reward};
+use crate::methods::dispute::{claim_reward, execute, proof};
+use crate::methods::{
+    admin::anonymous_voting_setup,
+    balance::{get_balance, redeem},
+    dispute::{create_dispute, create_dispute_demo},
+    initialize::initialize,
+    vote::{build_commitments_from_votes, commit_vote, register_to_vote, reveal_votes, vote},
+};
 use crate::storage::dispute::get_dispute;
 use crate::storage::dispute_status::DisputeStatus;
-use crate::storage::error;
-use crate::storage::project::Project;
-use crate::storage::vote::{VoteAnon, AnonymousVoteConfig, get_anonymous_voting_config as get_anon_config};
+use crate::storage::vote::{
+    AnonymousVoteConfig, VoteAnon, get_anonymous_voting_config as get_anon_config,
+};
 use crate::storage::voter::{get_voter, set_voter};
-use crate::storage::{DataKey, Dispute, Voter, error::Error};
-use crate::{
-    methods::{
-        admin::anonymous_voting_setup,
-        balance::{get_balance, redeem},
-        dispute::create_dispute,
-        initialize::initialize,
-        vote::{build_commitments_from_votes, commit_vote, register_to_vote, reveal_votes, vote},
-    },
-    storage::vote,
-};
-use soroban_sdk::crypto::bls12_381::G1Affine;
-use soroban_sdk::{
-    Address, Bytes, BytesN, Env, String, U256, Vec, contract, contractimpl, panic_with_error,
-};
+use crate::storage::{Dispute, Voter, error::Error};
+use soroban_sdk::{Address, Bytes, BytesN, Env, String, Vec, contract, contractimpl};
 
 pub trait ProtocolContractTrait {
     fn __constructor(env: Env, admin: Address, token: Address) -> Result<(), Error>;
@@ -47,6 +40,17 @@ pub trait ProtocolContractTrait {
     ) -> Vec<BytesN<96>>;
 
     fn create_dispute(
+        env: &Env,
+        project_id: u32,
+        creator: Address,
+        counterpart: Address,
+        proof: String,
+        voting_ends_at: u64,
+        called_contract: Address,
+        amount: i128,
+    ) -> Result<Dispute, Error>;
+
+    fn create_dispute_demo(
         env: &Env,
         project_id: u32,
         creator: Address,
@@ -87,18 +91,9 @@ pub trait ProtocolContractTrait {
         seeds: Option<Vec<u128>>,
     ) -> DisputeStatus;
 
-    fn claim_reward(
-        env: Env,
-        voter: Address,
-        dispute_id: u32,
-    ) -> Result<(), Error>;
+    fn claim_reward(env: Env, voter: Address, dispute_id: u32) -> Result<(), Error>;
 
-    fn proof(
-        env: Env,
-        dispute_id: u32,
-        tallies: Vec<u128>,
-        seeds: Vec<u128>,
-    ) -> bool;
+    fn proof(env: Env, dispute_id: u32, tallies: Vec<u128>, seeds: Vec<u128>) -> bool;
 }
 
 #[contract]
@@ -156,8 +151,30 @@ impl ProtocolContractTrait for ProtocolContract {
         proof: String,
         voting_ends_at: u64,
         called_contract: Address,
+        amount: i128,
     ) -> Result<Dispute, Error> {
         create_dispute(
+            env,
+            project_id,
+            creator,
+            counterpart,
+            proof,
+            voting_ends_at,
+            called_contract,
+            amount,
+        )
+    }
+
+    fn create_dispute_demo(
+        env: &Env,
+        project_id: u32,
+        creator: Address,
+        counterpart: Address,
+        proof: String,
+        voting_ends_at: u64,
+        called_contract: Address,
+    ) -> Result<Dispute, Error> {
+        create_dispute_demo(
             env,
             project_id,
             creator,
@@ -209,20 +226,11 @@ impl ProtocolContractTrait for ProtocolContract {
         execute(env, maintainer, dispute_id, tallies, seeds)
     }
 
-    fn claim_reward(
-        env: Env,
-        voter: Address,
-        dispute_id: u32,
-    ) -> Result<(), Error> {
+    fn claim_reward(env: Env, voter: Address, dispute_id: u32) -> Result<(), Error> {
         claim_reward(env, voter, dispute_id)
     }
 
-    fn proof(
-        env: Env,
-        dispute_id: u32,
-        tallies: Vec<u128>,
-        seeds: Vec<u128>,
-    ) -> bool {
+    fn proof(env: Env, dispute_id: u32, tallies: Vec<u128>, seeds: Vec<u128>) -> bool {
         let dispute = get_dispute(&env, dispute_id).unwrap();
         proof(env, dispute, tallies, seeds)
     }

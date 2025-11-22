@@ -9,7 +9,7 @@ fn test_create_dispute_success() {
 
     let proof = String::from_str(&setup.env, "IPFS_HASH_PROOF_1");
 
-    let dispute = setup.contract.create_dispute(
+    let dispute = setup.contract.create_dispute_demo(
         &setup.project_id,
         &setup.creator,
         &setup.counterpart,
@@ -37,7 +37,7 @@ fn test_create_multiple_disputes() {
     let proof1 = String::from_str(&setup.env, "PROOF_1");
     let proof2 = String::from_str(&setup.env, "PROOF_2");
 
-    let dispute1 = setup.contract.create_dispute(
+    let dispute1 = setup.contract.create_dispute_demo(
         &setup.project_id,
         &setup.creator,
         &setup.counterpart,
@@ -49,7 +49,7 @@ fn test_create_multiple_disputes() {
     let new_creator = soroban_sdk::Address::generate(&setup.env);
     let new_counterpart = soroban_sdk::Address::generate(&setup.env);
 
-    let dispute2 = setup.contract.create_dispute(
+    let dispute2 = setup.contract.create_dispute_demo(
         &setup.project_id,
         &new_creator,
         &new_counterpart,
@@ -85,7 +85,7 @@ fn test_dispute_timestamps() {
 
     let initial_time = setup.env.ledger().timestamp();
 
-    let dispute = setup.contract.create_dispute(
+    let dispute = setup.contract.create_dispute_demo(
         &setup.project_id,
         &setup.creator,
         &setup.counterpart,

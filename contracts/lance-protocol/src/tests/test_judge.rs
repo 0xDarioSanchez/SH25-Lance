@@ -1,13 +1,9 @@
-use soroban_sdk::{
-    IntoVal, Map, String, Symbol, Val,
-    testutils::{Events, Ledger},
-    vec,
-};
+use soroban_sdk::{String, testutils::Ledger, vec};
 
 use crate::{
     storage::{
         dispute_status::DisputeStatus,
-        vote::{AnonymousVote, Badge, VoteAnon},
+        vote::{AnonymousVote, VoteAnon},
     },
     tests::test_utils::{create_test_data, init_contract},
 };

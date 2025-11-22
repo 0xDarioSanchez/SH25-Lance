@@ -15,7 +15,6 @@ pub struct AnonymousDisputeSetup {
     #[topic]
     pub project_id: u32,
     pub creator: Address,
-    pub public_key: String,
 }
 
 #[contractevent]

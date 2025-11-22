@@ -1,7 +1,7 @@
 use soroban_sdk::{Bytes, String, testutils::Address as _};
 
 use crate::storage::dispute_status::DisputeStatus;
-use crate::tests::test_utils::{create_test_data, compute_commit_hash};
+use crate::tests::test_utils::{compute_commit_hash, create_test_data};
 
 #[test]
 fn test_full_dispute_lifecycle() {
@@ -14,7 +14,7 @@ fn test_full_dispute_lifecycle() {
 
     // Step 2: Create dispute (no longer requires public_key parameter)
     let proof = String::from_str(&setup.env, "Evidence IPFS hash");
-    let dispute = setup.contract.create_dispute(
+    let dispute = setup.contract.create_dispute_demo(
         &setup.project_id,
         &setup.creator,
         &setup.counterpart,
@@ -78,7 +78,7 @@ fn test_multiple_disputes_independent() {
 
     // Create first dispute
     let proof1 = String::from_str(&setup.env, "Proof 1");
-    let dispute1 = setup.contract.create_dispute(
+    let dispute1 = setup.contract.create_dispute_demo(
         &setup.project_id,
         &setup.creator,
         &setup.counterpart,
@@ -92,7 +92,7 @@ fn test_multiple_disputes_independent() {
     let counterpart2 = soroban_sdk::Address::generate(&setup.env);
     let proof2 = String::from_str(&setup.env, "Proof 2");
 
-    let dispute2 = setup.contract.create_dispute(
+    let dispute2 = setup.contract.create_dispute_demo(
         &setup.project_id,
         &creator2,
         &counterpart2,
@@ -140,7 +140,7 @@ fn test_unanimous_vote_for_creator() {
     setup.contract.new_voter(&setup.judge3);
 
     let proof = String::from_str(&setup.env, "Strong evidence");
-    let dispute = setup.contract.create_dispute(
+    let dispute = setup.contract.create_dispute_demo(
         &setup.project_id,
         &setup.creator,
         &setup.counterpart,
@@ -203,7 +203,7 @@ fn test_unanimous_vote_for_counterpart() {
     setup.contract.new_voter(&setup.judge3);
 
     let proof = String::from_str(&setup.env, "Weak evidence");
-    let dispute = setup.contract.create_dispute(
+    let dispute = setup.contract.create_dispute_demo(
         &setup.project_id,
         &setup.creator,
         &setup.counterpart,
@@ -264,7 +264,7 @@ fn test_single_judge_decides() {
     setup.contract.new_voter(&setup.judge1);
 
     let proof = String::from_str(&setup.env, "Evidence");
-    let dispute = setup.contract.create_dispute(
+    let dispute = setup.contract.create_dispute_demo(
         &setup.project_id,
         &setup.creator,
         &setup.counterpart,
@@ -301,7 +301,7 @@ fn test_large_number_of_judges() {
     let setup = create_test_data();
 
     let proof = String::from_str(&setup.env, "Evidence");
-    let dispute = setup.contract.create_dispute(
+    let dispute = setup.contract.create_dispute_demo(
         &setup.project_id,
         &setup.creator,
         &setup.counterpart,

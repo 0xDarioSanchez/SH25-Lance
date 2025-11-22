@@ -1,8 +1,5 @@
-//use crate::{Tansu, TansuClient, domain_contract, outcomes_contract, types};
-use soroban_sdk::testutils::{Address as _, Events};
-use soroban_sdk::{
-    Address, Bytes, BytesN, Env, Executable, IntoVal, Map, String, Symbol, Val, Vec, token, vec,
-};
+use soroban_sdk::testutils::Address as _;
+use soroban_sdk::{Address, Bytes, BytesN, Env, String, token, vec};
 
 use crate::ProtocolContract;
 use crate::contract::ProtocolContractClient;
@@ -25,17 +22,12 @@ pub struct TestSetup {
     pub creator: Address,
     pub counterpart: Address,
     pub proof: String,
-    //pub domain_id: Address,
-    //pub outcomes_id: Address,
     pub token_stellar: token::StellarAssetClient<'static>,
-    //pub grogu: Address,
-    //pub mando: Address,
     pub contract_admin: Address,
     pub judge1: Address,
     pub judge2: Address,
     pub judge3: Address,
     pub project_id: u32,
-    pub public_key: String,
     pub voting_ends_at: u64,
 }
 
@@ -47,37 +39,12 @@ pub fn create_env() -> Env {
 
 pub fn create_test_data() -> TestSetup {
     let env = create_env();
-
-    //let outcomes_id = env.register(outcomes_contract::WASM, ());
-
-    //let domain_id = env.register(domain_contract::WASM, ());
-    //let domain = domain_contract::Client::new(&env, &domain_id);
-
     let _adm = Address::generate(&env);
-    //let node_rate: u128 = 100;
-    //let min_duration: u64 = 31_536_000;
-    /*let allowed_tlds: Vec<Bytes> = Vec::from_array(
-        &env,
-        [
-            Bytes::from_slice(&env, b"xlm"),
-            Bytes::from_slice(&env, b"stellar"),
-            Bytes::from_slice(&env, b"wallet"),
-            Bytes::from_slice(&env, b"dao"),
-        ],
-    );*/
 
     let issuer = Address::generate(&env);
     let sac = env.register_stellar_asset_contract_v2(issuer.clone());
     let token_client = token::TokenClient::new(&env, &sac.address());
     let token_stellar = token::StellarAssetClient::new(&env, &sac.address());
-
-    /*domain.init(
-        &adm,
-        &node_rate,
-        &token_client.address.clone(),
-        &min_duration,
-        &allowed_tlds,
-    );*/
 
     let contract_admin = Address::generate(&env);
     let contract_id = env.register(ProtocolContract, (&contract_admin, token_client.address));
@@ -111,7 +78,6 @@ pub fn create_test_data() -> TestSetup {
     let judge3 = Address::generate(&env);
     let proof = String::from_str(&env, "test proof 1");
     let project_id = 1;
-    let public_key = String::from_str(&env, "test public key 1");
     let voting_ends_at = env.ledger().timestamp() + 3600 * 24 * 2;
 
     TestSetup {
@@ -120,18 +86,13 @@ pub fn create_test_data() -> TestSetup {
         contract_id,
         creator,
         counterpart,
-        //domain_id,
-        //outcomes_id,
         token_stellar,
-        //grogu,
-        //mando,
         contract_admin,
         proof,
         judge1,
         judge2,
         judge3,
         project_id,
-        public_key,
         voting_ends_at,
     }
 }
@@ -146,7 +107,7 @@ pub fn init_contract(setup: &TestSetup) -> Dispute {
     //setup.token_stellar.mint(&setup.grogu, &genesis_amount);
     //setup.token_stellar.mint(&setup.mando, &genesis_amount);
 
-    let dispute = setup.contract.create_dispute(
+    let dispute = setup.contract.create_dispute_demo(
         &setup.project_id,
         &setup.creator,
         &setup.counterpart,
@@ -154,9 +115,6 @@ pub fn init_contract(setup: &TestSetup) -> Dispute {
         &setup.voting_ends_at,
         &setup.contract_id,
     );
-
-    // Note: anonymous_voting_setup event is no longer emitted automatically
-    // The maintainer must call anonymous_voting_setup separately before creating disputes
 
     assert_eq!(dispute.vote_data.votes, vec![&setup.env]);
 

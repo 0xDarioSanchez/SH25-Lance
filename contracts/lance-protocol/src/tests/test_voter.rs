@@ -60,7 +60,7 @@ fn test_voter_can_be_judge() {
 
     // Create a dispute
 
-    let dispute = setup.contract.create_dispute(
+    let dispute = setup.contract.create_dispute_demo(
         &setup.project_id,
         &setup.creator,
         &setup.counterpart,

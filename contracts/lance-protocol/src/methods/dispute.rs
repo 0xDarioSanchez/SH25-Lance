@@ -1,5 +1,4 @@
 use crate::events::event;
-use crate::methods::vote::build_commitments_from_votes;
 use crate::storage::dispute::get_dispute;
 use crate::storage::vote::get_anonymous_voting_config;
 use crate::storage::voter::{get_voter, update_voter};
@@ -8,12 +7,12 @@ use crate::storage::{
     dispute_status::DisputeStatus,
     error::Error,
     storage::DataKey,
-    vote::{AnonymousVote, Badge, VoteAnon, VoteData},
+    vote::{VoteAnon, VoteData},
 };
 use soroban_sdk::crypto::bls12_381::G1Affine;
 use soroban_sdk::{Address, BytesN, Env, String, U256, Vec, panic_with_error, vec};
 
-pub fn create_dispute(
+pub fn create_dispute_demo(
     env: &Env,
     project_id: u32,
     creator: Address,
@@ -35,49 +34,9 @@ pub fn create_dispute(
         .instance()
         .set(&DataKey::DisputeId, &new_dispute_id);
 
-    // Note: anonymous_voting_setup should be called separately by the maintainer
-    // before creating disputes. It sets up the public key for the entire project.
-    // Calling it here would overwrite any existing configuration.
-    // admin::anonymous_voting_setup(env.clone(), creator.clone(), project_id, public_key.clone());
-
-    // proposer is automatically in the abstain group
-    // use the first level to not block a vote from proposer with
-    // a very high level of trust
-    // let abstain_weight = Badge::Verified as u32;
-    // let vote_ = VoteAnon::AnonymousVote(AnonymousVote {
-    //     address: creator.clone(),
-    //     weight: abstain_weight,
-    //     encrypted_seeds: vec![
-    //         &env,
-    //         String::from_str(&env, "0"),
-    //         String::from_str(&env, "0"),
-    //         String::from_str(&env, "0"),
-    //     ],
-    //     encrypted_votes: vec![
-    //         &env,
-    //         String::from_str(&env, "0"),
-    //         String::from_str(&env, "0"),
-    //         String::from_str(&env, "1"),
-    //     ],
-    //     commitments: build_commitments_from_votes(
-    //         env.clone(),
-    //         new_dispute_id,
-    //         vec![&env, 0u128, 0u128, 1u128],
-    //         vec![&env, 0u128, 0u128, 0u128],
-    //     ),
-    // });
-
-    // let votes = vec![&env, vote_];
-    // let vote_data = VoteData {
-    //     voting_ends_at,
-    //     //public_voting,
-    //     votes,
-    // };
-
     let votes = vec![&env];
     let vote_data = VoteData {
         voting_ends_at,
-        //public_voting,
         votes,
     };
 
@@ -99,21 +58,56 @@ pub fn create_dispute(
         waiting_for_judges: false,
         votes_for: 0,
         votes_against: 0,
-        //TODO payment: 0,
         vote_data,
         called_contract,
     };
 
     set_dispute(env, new_dispute_id, dispute.clone());
-    
+
     // Emit event for dispute creation
-    // Note: public_key is stored separately via anonymous_voting_setup
-    // event::AnonymousDisputeSetup {
-    //     project_id,
-    //     creator,
-    //     public_key,
-    // }
-    // .publish(&env);
+    event::AnonymousDisputeSetup {
+        project_id,
+        creator,
+    }
+    .publish(&env);
+
+    Ok(dispute)
+}
+
+pub fn create_dispute(
+    env: &Env,
+    project_id: u32,
+    creator: Address,
+    counterpart: Address,
+    proof: String,
+    voting_ends_at: u64,
+    called_contract: Address,
+    amount: i128,
+) -> Result<Dispute, Error> {
+    let dispute = Dispute {
+        project_id,
+        dispute_id: 1,
+        able_to_vote: Vec::new(env),
+        voters: Vec::new(env),
+        vote_commits: Vec::new(env),
+        votes: Vec::new(env),
+        dispute_status: DisputeStatus::OPEN,
+        initial_timestamp: env.ledger().timestamp(),
+        finish_timestamp: None,
+        creator: creator.clone(),
+        counterpart,
+        winner: None,
+        creator_proves: proof.clone(),
+        counterpart_proves: None,
+        waiting_for_judges: false,
+        votes_for: 0,
+        votes_against: 0,
+        vote_data: VoteData {
+            voting_ends_at,
+            votes: Vec::new(env),
+        },
+        called_contract,
+    };
 
     Ok(dispute)
 }
@@ -150,16 +144,7 @@ pub fn execute(
     tallies: Option<Vec<u128>>,
     seeds: Option<Vec<u128>>,
 ) -> DisputeStatus {
-    ///Tansu::require_not_paused(env.clone());
     maintainer.require_auth();
-
-    //let page = proposal_id / MAX_PROPOSALS_PER_PAGE;
-    //let sub_id = proposal_id % MAX_PROPOSALS_PER_PAGE;
-    // let mut dao_page = Self::get_dao(env.clone(), project_key.clone(), page);
-    // let mut proposal = match dao_page.proposals.try_get(sub_id) {
-    // Ok(Some(proposal)) => proposal,
-    // _ => panic_with_error!(&env, &errors::ContractErrors::NoProposalorPageFound),
-    // };
 
     let mut dispute = match get_dispute(&env, dispute_id) {
         Ok(dispute) => dispute,
@@ -176,37 +161,7 @@ pub fn execute(
         panic_with_error!(&env, &Error::ProposalVotingTime);
     }
 
-    // proposers get its collateral back
-    //TODO: Restore treive collateral or remove because we don't need it
-    /*let sac_contract = crate::retrieve_contract(&env, types::ContractKey::CollateralContract);
-    let token_stellar = token::StellarAssetClient::new(&env, &sac_contract.address);
-    match token_stellar.try_transfer(
-        &env.current_contract_address(),
-        &proposal.proposer,
-        &PROPOSAL_COLLATERAL,
-    ) {
-        Ok(..) => (),
-        _ => panic_with_error!(&env, &errors::ContractErrors::CollateralError),
-    }
-
-    // all voters get their collateral back
-    for vote_ in &proposal.vote_data.votes {
-        let vote_address = match &vote_ {
-            types::Vote::PublicVote(vote_choice) => &vote_choice.address,
-            types::Vote::AnonymousVote(vote_choice) => &vote_choice.address,
-        };
-        match token_stellar.try_transfer(
-            &env.current_contract_address(),
-            vote_address,
-            &VOTE_COLLATERAL,
-        ) {
-            Ok(..) => (),
-            _ => panic_with_error!(&env, &errors::ContractErrors::CollateralError),
-        }
-    }*/
-
     // tally to results
-    //dispute.dispute_status =
     let (tallies_, seeds_) = match (tallies, seeds) {
         (Some(t), Some(s)) => (t, s),
         _ => panic_with_error!(&env, &Error::TallySeedError),
@@ -226,18 +181,18 @@ pub fn execute(
     ) {
         panic_with_error!(&env, &Error::InvalidProof)
     }
-    
+
     // Set the dispute status based on tallies
     dispute.dispute_status = anonymous_execute(&tallies_);
-    
+
     // Extract vote counts from tallies
     let voted_approve = tallies_.get(0).unwrap();
     let voted_reject = tallies_.get(1).unwrap();
-    
+
     // Set votes_for and votes_against
     dispute.votes_for = voted_approve as u32;
     dispute.votes_against = voted_reject as u32;
-    
+
     // Set the winner based on the dispute status
     dispute.winner = match dispute.dispute_status {
         DisputeStatus::CREATOR => Some(dispute.creator.clone()),
@@ -246,41 +201,6 @@ pub fn execute(
     };
 
     set_dispute(&env, dispute_id, dispute.clone());
-
-    /*
-
-    dao_page.proposals.set(sub_id, proposal.clone());
-
-    env.storage().persistent().set(
-        &types::ProjectKey::Dao(project_key.clone(), page),
-        &dao_page,
-    );
-
-    events::ProposalExecuted {
-        project_key: project_key.clone(),
-        proposal_id,
-        status: match proposal.status {
-            types::ProposalStatus::Active => String::from_str(&env, "Active"),
-            types::ProposalStatus::Approved => String::from_str(&env, "Approved"),
-            types::ProposalStatus::Rejected => String::from_str(&env, "Rejected"),
-            types::ProposalStatus::Cancelled => String::from_str(&env, "Cancelled"),
-            types::ProposalStatus::Malicious => String::from_str(&env, "Malicious"),
-        },
-        maintainer: maintainer.clone(),
-    }
-    .publish(&env);
-
-    if (proposal.outcomes_contract).is_some() {
-        let client = outcomes_contract::Client::new(&env, &(proposal.outcomes_contract).unwrap());
-
-        match proposal.status {
-            types::ProposalStatus::Approved => client.approve_outcome(&maintainer),
-            types::ProposalStatus::Rejected => client.reject_outcome(&maintainer),
-            types::ProposalStatus::Cancelled => client.abstain_outcome(&maintainer),
-            _ => (),
-        };
-    } */
-
     dispute.dispute_status
 }
 
@@ -471,11 +391,7 @@ fn tallies_to_result(
 /// * If the voter didn't participate in this dispute
 /// * If the voter already claimed their reward
 /// * If the voter didn't vote with the majority
-pub fn claim_reward(
-    env: Env,
-    voter: Address,
-    dispute_id: u32,
-) -> Result<(), Error> {
+pub fn claim_reward(env: Env, voter: Address, dispute_id: u32) -> Result<(), Error> {
     voter.require_auth();
 
     // Get dispute
@@ -503,7 +419,7 @@ pub fn claim_reward(
 
     // Find voter's vote in the dispute
     let mut voter_choice: Option<usize> = None; // 0=creator, 1=counterpart, 2=abstain
-    
+
     for vote in dispute.vote_data.votes.iter() {
         let VoteAnon::AnonymousVote(anonymous_vote) = vote;
         if anonymous_vote.address == voter {
@@ -523,7 +439,7 @@ pub fn claim_reward(
     // For anonymous votes, we can't easily determine individual vote choice
     // So we reward ALL voters who participated (they proved they voted)
     // Alternatively, you could require voters to submit proof of their vote choice
-    
+
     // If dispute ended in ABSTAIN, no rewards
     if dispute.dispute_status == DisputeStatus::ABSTAIN {
         panic_with_error!(&env, &Error::NoWinner);
