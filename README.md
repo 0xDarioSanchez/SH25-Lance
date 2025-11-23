@@ -5,6 +5,7 @@
 </div>
 
 # Lance Protocol: Zero-Knowledge Private Voting for Soroban
+# Lance Protocol: Zero-Knowledge Private Voting for Soroban
 
 ## Problem
 
