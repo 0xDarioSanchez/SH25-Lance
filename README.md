@@ -78,3 +78,5 @@ This satisfies the hackathon requirement of implementing **real zero-knowledge c
 ![public_functions](images/public_functions.png "Public Functions")
 ### Transactions
 ![transactions](images/transactions.png "Transactions")
+### Resume
+![resume](images/resume.png "Resume")
