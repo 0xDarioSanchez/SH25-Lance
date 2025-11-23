@@ -41,15 +41,20 @@ pub fn create_dispute_for_proposal(
 
     // Call lance-protocol contract to create the dispute
     let lance_client = lance_protocol::Client::new(env, &lance_protocol_contract);
-    let dispute = lance_client.create_dispute(
+    let dispute = lance_client.create_dispute_demo(
         &proposal_id,                    // project_id (using proposal_id as project_id)
         &creator,                        // creator (the one creating the dispute)
         &counterpart,                    // counterpart (the proposal creator)
         &proof,                          // proof/evidence
         &voting_ends_at,                 // voting_ends_at
         &env.current_contract_address(), // called_contract (this governor contract)
-        &amount,                         // amount of the service
+        // Note: `create_dispute_demo` in lance-protocol does not accept an `amount` argument.
+        // The `amount` parameter is currently unused here but kept in the function
+        // signature for compatibility; suppress unused-variable warning below.
     );
+
+    // suppress unused variable warning for `amount` until it's needed
+    let _ = amount;
 
     // Return the dispute_id from lance-protocol
     dispute.dispute_id

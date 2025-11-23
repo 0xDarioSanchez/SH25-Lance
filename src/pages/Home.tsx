@@ -80,11 +80,12 @@ const Home: React.FC = () => {
           voting model in real time.
         </Text>
 
-        {/* PASAMOS loadDisputes A CreateDisputeButton */}
-        {!isMaintainer && <CreateDisputeButton onCreated={loadDisputes} />}
-
         {/* Register as Judge Button */}
-        {!isMaintainer && <RegisterJudgeButton />}
+        {!isMaintainer && (
+          <div style={{ marginBottom: "20px" }}>
+            <RegisterJudgeButton />
+          </div>
+        )}
 
         {/* Anonymous Voting Setup - Only shown to maintainer */}
         {isMaintainer ? (
@@ -104,6 +105,13 @@ const Home: React.FC = () => {
             <Text as="p" size="xs" style={{ color: "#856404", marginTop: "8px" }}>
               Maintainer: {MAINTAINER_ADDRESS.slice(0, 12)}...{MAINTAINER_ADDRESS.slice(-8)}
             </Text>
+          </div>
+        )}
+
+        {/* Move CreateDisputeButton here, just above DisputeList */}
+        {!isMaintainer && (
+          <div style={{ marginBottom: "24px" }}>
+            <CreateDisputeButton onCreated={loadDisputes} />
           </div>
         )}
 

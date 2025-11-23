@@ -20,7 +20,7 @@ pub struct GovernorContract;
 
 #[contractimpl]
 impl Governor for GovernorContract {
-    fn initialize(e: Env, votes: Address, council: Address, settings: GovernorSettings) {
+    fn initialize(e: Env, votes: Address, council: Address, settings: GovernorSettings, lance_protocol: Address) {
         if storage::get_is_init(&e) {
             panic_with_error!(&e, GovernorError::AlreadyInitializedError);
         }
