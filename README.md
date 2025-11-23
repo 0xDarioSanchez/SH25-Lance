@@ -1,3 +1,9 @@
+<div align="center">
+    <img src="images/resume.jpg" alt="logo" width="500"/>
+  </br>
+  </br>
+</div>
+
 # Lance Protocol: Zero-Knowledge Private Voting for Soroban
 
 ## Problem
@@ -78,9 +84,3 @@ This satisfies the hackathon requirement of implementing **real zero-knowledge c
 ![public_functions](images/public_functions.png "Public Functions")
 ### Transactions
 ![transactions](images/transactions.png "Transactions")
-### Focus
-<div align="center">
-    <img src="images/resume.jpg" alt="logo" width="500"/>
-  </br>
-  </br>
-</div>
