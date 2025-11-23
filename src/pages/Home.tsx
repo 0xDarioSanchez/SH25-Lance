@@ -81,10 +81,10 @@ const Home: React.FC = () => {
         </Text>
 
         {/* PASAMOS loadDisputes A CreateDisputeButton */}
-        <CreateDisputeButton onCreated={loadDisputes} />
+        {!isMaintainer && <CreateDisputeButton onCreated={loadDisputes} />}
 
         {/* Register as Judge Button */}
-        <RegisterJudgeButton />
+        {!isMaintainer && <RegisterJudgeButton />}
 
         {/* Anonymous Voting Setup - Only shown to maintainer */}
         {isMaintainer ? (
