@@ -1,10 +1,4 @@
-<div align="center">
-    <img src="images/resume.jpg" alt="logo" width="500"/>
-  </br>
-  </br>
-</div>
 
-# Lance Protocol: Zero-Knowledge Private Voting for Soroban
 # Lance Protocol: Zero-Knowledge Private Voting for Soroban
 
 ## Problem
