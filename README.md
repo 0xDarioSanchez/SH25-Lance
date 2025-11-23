@@ -79,4 +79,4 @@ This satisfies the hackathon requirement of implementing **real zero-knowledge c
 ### Transactions
 ![transactions](images/transactions.png "Transactions")
 ### Resume
-![resume](images/resume.png "Resume")
+![resume](images/resume.jpg "Resume")
