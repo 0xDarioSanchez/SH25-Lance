@@ -78,5 +78,9 @@ This satisfies the hackathon requirement of implementing **real zero-knowledge c
 ![public_functions](images/public_functions.png "Public Functions")
 ### Transactions
 ![transactions](images/transactions.png "Transactions")
-### Resume
-![resume](images/resume.jpg "Resume")
+### Focus
+<div align="center">
+    <img src="images/resume.jpg" alt="logo" width="500"/>
+  </br>
+  </br>
+</div>
