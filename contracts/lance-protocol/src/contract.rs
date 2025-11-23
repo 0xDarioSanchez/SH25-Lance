@@ -47,7 +47,7 @@ pub trait ProtocolContractTrait {
         proof: String,
         voting_ends_at: u64,
         called_contract: Address,
-        amount: i128,
+        // amount: i128,
     ) -> Result<Dispute, Error>;
 
     fn create_dispute_demo(
@@ -151,7 +151,7 @@ impl ProtocolContractTrait for ProtocolContract {
         proof: String,
         voting_ends_at: u64,
         called_contract: Address,
-        amount: i128,
+        // amount: i128,
     ) -> Result<Dispute, Error> {
         create_dispute(
             env,
@@ -161,7 +161,7 @@ impl ProtocolContractTrait for ProtocolContract {
             proof,
             voting_ends_at,
             called_contract,
-            amount,
+            // amount,
         )
     }
 

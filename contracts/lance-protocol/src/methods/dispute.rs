@@ -82,7 +82,7 @@ pub fn create_dispute(
     proof: String,
     voting_ends_at: u64,
     called_contract: Address,
-    amount: i128,
+    // amount: i128,
 ) -> Result<Dispute, Error> {
     let dispute = Dispute {
         project_id,

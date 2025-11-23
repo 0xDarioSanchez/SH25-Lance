@@ -22,7 +22,7 @@ pub struct TestSetup {
     pub creator: Address,
     pub counterpart: Address,
     pub proof: String,
-    pub token_stellar: token::StellarAssetClient<'static>,
+    // pub token_stellar: token::StellarAssetClient<'static>,
     pub contract_admin: Address,
     pub judge1: Address,
     pub judge2: Address,
@@ -44,7 +44,7 @@ pub fn create_test_data() -> TestSetup {
     let issuer = Address::generate(&env);
     let sac = env.register_stellar_asset_contract_v2(issuer.clone());
     let token_client = token::TokenClient::new(&env, &sac.address());
-    let token_stellar = token::StellarAssetClient::new(&env, &sac.address());
+    // let token_stellar = token::StellarAssetClient::new(&env, &sac.address());
 
     let contract_admin = Address::generate(&env);
     let contract_id = env.register(ProtocolContract, (&contract_admin, token_client.address));
@@ -86,7 +86,7 @@ pub fn create_test_data() -> TestSetup {
         contract_id,
         creator,
         counterpart,
-        token_stellar,
+        // token_stellar,
         contract_admin,
         proof,
         judge1,
@@ -103,7 +103,7 @@ pub fn init_contract(setup: &TestSetup) -> Dispute {
     let _ipfs = String::from_str(&setup.env, "2ef4f49fdd8fa9dc463f1f06a094c26b88710990");
     //let maintainers = vec![&setup.env, setup.grogu.clone(), setup.mando.clone()];
 
-    let genesis_amount: i128 = 1_000_000_000 * 10_000_000;
+    // let genesis_amount: i128 = 1_000_000_000 * 10_000_000;
     //setup.token_stellar.mint(&setup.grogu, &genesis_amount);
     //setup.token_stellar.mint(&setup.mando, &genesis_amount);
 

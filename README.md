@@ -71,16 +71,124 @@ This satisfies the hackathon requirement of implementing **real zero-knowledge c
 - Encrypted commit submission  
 - BLS12-381 based ZK proof verifica
 
+- **Frontend**: React (Next.js) for a simple UI where clients post jobs (title, budget in USDC/XLM) and freelancers accept/submit work. Hosted on Vercel for demo.
+- **Backend (Light)**: Node.js with Stellar SDK for wallet interactions and job metadata storage (off-chain for simplicity, IPFS optional for decentralization).
+- **Blockchain Layer**: Stellar's Soroban smart contracts (Rust) handle escrow logic: create, fund, submit work, and release/timeout funds. Stellar ledger stores transactions; Horizon API queries state.
+- **Storage**: IPFS (via Pinata) for job descriptions and work proof (e.g., file hashes), ensuring decentralized data.
+- **User Auth**: Freighter wallet for Stellar account management and transaction signing.
+
+
+## Stellar Components Used
+- **Stellar SDK**: Integrates frontend with Stellar for account management, payments, and contract calls.
+- **Soroban**: Rust-based smart contracts for escrow (create, fund, release, timeout). Deployed on Futurenet testnet.
+- **Horizon API**: Queries ledger for transaction history and account balances.
+- **Freighter Wallet**: Browser extension for user authentication and transaction signing.
+- **Stellar Assets**: USDC for stable payments, XLM for native transactions. Trustlines ensure secure asset handling.
+- **Stellar Scaffold**: Displays transparent transaction logs for demo.
+
+## Installation Steps
+### Prerequisites
+- Node.js (v16+)
+- Rust (for Soroban contracts)
+- Freighter wallet (browser extension)
+- Git, npm, and a modern browser
+
+...
+
+
+## Deployment
+
+### Prerequisites
+
+- Rust toolchain with `wasm32-unknown-unknown` target
+- Soroban CLI
+- Stellar network access (testnet/mainnet)
+
+### Build, deploy and execute
+
+Inside main folder give permission to script files for being executed with:
+```bash
+chmod +x ./accounts.sh
+chmod +x ./full.sh
+```
+
+Execute accounts.sh only once running
+```bash
+./accounts.sh
+```
+Execute run.sh only once running to build, optimize and execute transactions
+```bash
+./full.sh
+```
+
+### Front-End
+
+To see our page:
+https://lancestellar.vercel.app/
+
+To open our front-end and wallet integration code
+https://github.com/artugrande/lance-front/
+
+### Tests
+
+For running test execute
+```bash
+cargo test
+```
+
+## Security Features
+
+- **Access Control**: Only admin and authorized crowdfunding contract can mint
+- **Proof Uniqueness**: Prevents duplicate NFTs for the same proof
+- **Validation System**: Two-step process (creation + validation)
+- **Immutable Records**: Saved metadata provides permanent milestone records
+
+## Testing
+
+Run the test suite:
+
+```bash
+cargo test
+```
+
+Key test scenarios:
+- Contract initialization
+- Milestone minting and validation
+- Token transfers and approvals
+- Campaign progress tracking
+- Unauthorized access prevention
+
+## Roadmap
+
+- [x] Develop MVP with main functionalities 
+- [x] Soroban Smart Contracts for users, services, disputes and voting interactions
+- [x] Develop basic front-end to showcase user interactions 
+- [x] Functions and test for deposit funds and withdrow earnings with Blend Capital
+- [x] Implement an on-chain reputation system based in Neural Quorum Governance
+- [x] Wallet integration with Stellar Wallet Key
+
+- [ ] Evaluate and implement a minimal contract balance to assure liquidity for instant user payments
+- [ ] Create registry platform for user verification, offering an optional 'checked' status
+- [ ] Create a matching page where users can search and chat before before agreeing to a service
+- [ ] Implement premium client tools like talent matching, project management features, or hiring support
+- [ ] Develop dashboard for users to manage and track their services and disputes
+- [ ] Create analytics system for tracking usage metrics
+- [ ] Create mobile app for allowing interactions on smartphones
+- [ ] Create NFT smart contract to reward users after reaching certain achievements
+- [ ] Implement back-end service for managing no fundamental information off-chain
+- [ ] Enhance Stellar SDK integration for broader blockchain interactions
+- [ ] Create documentation and video tutorials for better user boarding 
+- [ ] Implement support for multiple Stellar-compatible wallet providers
+- [ ] Implement governance system for community-driven protocol upgrades
+
 
 ## Screenshots
 
 ### Front-End
-![frontend](images/frontend.png "Front-End")
+![frontend](public/final.png "Front-End")
 ### Running script 1
-![script](images/script1.png "Running script 1")
-### Running script 2
-![script](images/script2.png "Running script 2")
-### Public Functions
-![public_functions](images/public_functions.png "Public Functions")
-### Transactions
-![transactions](images/transactions.png "Transactions")
+![script](public/scripts.png "Running script 1")
+### Tests
+![script](public/test.png "Running tests")
+### Protocol Overflow
+![public_functions](public/overflow.png "Basic Overview")

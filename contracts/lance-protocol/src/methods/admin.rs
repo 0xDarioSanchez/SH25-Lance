@@ -1,22 +1,24 @@
-use soroban_sdk::{Address, Bytes, Env, String, panic_with_error};
+use soroban_sdk::{Address, Bytes, Env, String, 
+    // panic_with_error
+};
 
 use crate::{
     events::event,
     storage::{
-        self, DataKey,
-        error::{self, Error},
+        DataKey,
+        // error::{self, Error},
         vote,
     },
 };
 
-pub(crate) fn read_admin(env: &Env) -> Result<Address, Error> {
-    let key = DataKey::Admin;
+// pub(crate) fn read_admin(env: &Env) -> Result<Address, Error> {
+//     let key = DataKey::Admin;
 
-    env.storage()
-        .instance()
-        .get(&key)
-        .ok_or(Error::AdminNotFound)
-}
+//     env.storage()
+//         .instance()
+//         .get(&key)
+//         .ok_or(Error::AdminNotFound)
+// }
 
 pub(crate) fn has_admin(env: &Env) -> bool {
     let key = DataKey::Admin;
@@ -30,37 +32,37 @@ pub(crate) fn set_admin(env: &Env, admin: &Address) {
     env.storage().instance().set(&key, admin);
 }
 
-pub(crate) fn require_admin(env: &Env) {
-    let key = DataKey::Admin;
+// pub(crate) fn require_admin(env: &Env) {
+//     let key = DataKey::Admin;
 
-    if let Some(admin) = env.storage().instance().get::<DataKey, Address>(&key) {
-        admin.require_auth();
-    } else {
-        panic_with_error!(&env, &error::Error::InvalidKey)
-    }
-}
+//     if let Some(admin) = env.storage().instance().get::<DataKey, Address>(&key) {
+//         admin.require_auth();
+//     } else {
+//         panic_with_error!(&env, &error::Error::InvalidKey)
+//     }
+// }
 
-pub(crate) fn auth_maintainers(
-    env: &Env,
-    maintainer: &Address,
-    project_id: u32,
-) -> storage::Dispute {
-    maintainer.require_auth();
+// pub(crate) fn auth_maintainers(
+//     env: &Env,
+//     maintainer: &Address,
+//     project_id: u32,
+// ) -> storage::Dispute {
+//     maintainer.require_auth();
 
-    if let Some(dispute) = env
-        .storage()
-        .instance()
-        .get::<DataKey, storage::Dispute>(&DataKey::Disputes(project_id))
-    {
-        if !dispute.able_to_vote.contains(maintainer) && !dispute.voters.contains(maintainer) {
-            //QUESTION: should we panic here?
-            panic_with_error!(&env, &error::Error::UnauthorizedSigner);
-        }
-        dispute
-    } else {
-        panic_with_error!(&env, &error::Error::InvalidKey)
-    }
-}
+//     if let Some(dispute) = env
+//         .storage()
+//         .instance()
+//         .get::<DataKey, storage::Dispute>(&DataKey::Disputes(project_id))
+//     {
+//         if !dispute.able_to_vote.contains(maintainer) && !dispute.voters.contains(maintainer) {
+//             //QUESTION: should we panic here?
+//             panic_with_error!(&env, &error::Error::UnauthorizedSigner);
+//         }
+//         dispute
+//     } else {
+//         panic_with_error!(&env, &error::Error::InvalidKey)
+//     }
+// }
 
 /// Setup anonymous voting for a project.
 ///
